@@ -3,7 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/neckchi/github.com/neckchi/schedulehub/config/domain"
+	"github.com/neckchi/schedulehub/config/domain"
 	"github.com/neckchi/schedulehub/internal/exceptions"
 	"net/http"
 )
