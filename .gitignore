@@ -12,4 +12,5 @@ go.work.sum
 .vscode
 /bin
 ./tests
-./
+./GoProject.code-workspace
+./# Tools Configuration.md
