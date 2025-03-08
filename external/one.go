@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
-	"github.com/neckchi/github.com/neckchi/schedulehub/external/interfaces"
+	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
 	"math"
