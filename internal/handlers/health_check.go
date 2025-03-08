@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/neckchi/schedulehub/internal/exceptions"
 	"net/http"
-	"schedulehub/internal/exceptions"
 )
 
 func HealthCheckHandler() http.Handler {

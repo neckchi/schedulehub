@@ -3,8 +3,8 @@ package interfaces
 import (
 	"context"
 	"encoding/json"
-	httpclient "schedulehub/internal/http"
-	env "schedulehub/internal/secret"
+	httpclient "github.com/neckchi/schedulehub/internal/http"
+	env "github.com/neckchi/schedulehub/internal/secret"
 	"time"
 )
 

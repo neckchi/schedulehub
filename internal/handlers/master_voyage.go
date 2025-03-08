@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/neckchi/schedulehub/internal/database"
+	"github.com/neckchi/schedulehub/internal/exceptions"
+	"github.com/neckchi/schedulehub/internal/middleware"
+	"github.com/neckchi/schedulehub/internal/schema"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"schedulehub/internal/database"
-	"schedulehub/internal/exceptions"
-	"schedulehub/internal/middleware"
-	"schedulehub/internal/schema"
 	"time"
 )
 

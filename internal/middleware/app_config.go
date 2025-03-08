@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"context"
+	"github.com/neckchi/schedulehub/config/controller"
+	"github.com/neckchi/schedulehub/config/domain"
+	"github.com/neckchi/schedulehub/internal/exceptions"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path/filepath"
-	"schedulehub/config/controller"
-	"schedulehub/config/domain"
-	"schedulehub/internal/exceptions"
 )
 
 func GetAppConfig(next http.Handler) http.Handler {

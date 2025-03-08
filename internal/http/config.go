@@ -2,9 +2,9 @@ package httpclient
 
 import (
 	"crypto/tls"
+	"github.com/neckchi/schedulehub/internal/database"
 	"net/http"
 	"net/url"
-	"schedulehub/internal/database"
 	"time"
 )
 

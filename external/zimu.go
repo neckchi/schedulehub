@@ -3,9 +3,9 @@ package external
 import (
 	"encoding/json"
 	"fmt"
-	"schedulehub/external/interfaces"
-	"schedulehub/internal/schema"
-	env "schedulehub/internal/secret"
+	"github.com/neckchi/schedulehub/external/interfaces"
+	"github.com/neckchi/schedulehub/internal/schema"
+	env "github.com/neckchi/schedulehub/internal/secret"
 	"time"
 )
 

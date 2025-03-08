@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
+	"github.com/neckchi/schedulehub/internal/routers"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"os/signal"
-	"schedulehub/internal/routers"
 	"syscall"
 	"time"
 )

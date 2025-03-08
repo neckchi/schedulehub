@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/neckchi/schedulehub/internal/exceptions"
+	"github.com/neckchi/schedulehub/internal/schema"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"reflect"
-	"schedulehub/internal/exceptions"
-	"schedulehub/internal/schema"
 	"strconv"
 )
 

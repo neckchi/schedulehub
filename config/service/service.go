@@ -1,9 +1,9 @@
 package service
 
 import (
+	"github.com/neckchi/schedulehub/config/domain"
 	log "github.com/sirupsen/logrus"
 	"os"
-	"schedulehub/config/domain"
 	"time"
 )
 

@@ -1,17 +1,14 @@
-module schedulehub
+module github.com/neckchi/schedulehub
 
 go 1.23.2
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/redis/go-redis/v9 v9.7.0
+	github.com/sijms/go-ora/v2 v2.8.23
 	github.com/sirupsen/logrus v1.9.3
-)
-
-require (
-	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
-	github.com/sijms/go-ora/v2 v2.8.23 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

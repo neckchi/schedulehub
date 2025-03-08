@@ -1,11 +1,11 @@
 package routers
 
 import (
+	"github.com/neckchi/schedulehub/internal/database"
+	"github.com/neckchi/schedulehub/internal/handlers"
+	"github.com/neckchi/schedulehub/internal/middleware"
+	env "github.com/neckchi/schedulehub/internal/secret"
 	"net/http"
-	"schedulehub/internal/database"
-	"schedulehub/internal/handlers"
-	"schedulehub/internal/middleware"
-	env "schedulehub/internal/secret"
 )
 
 func VoyageRouter() http.Handler {

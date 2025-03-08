@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/neckchi/schedulehub/internal/schema"
 	go_ora "github.com/sijms/go-ora/v2"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"path/filepath"
-	"schedulehub/internal/schema"
 	"sort"
 	"time"
 )

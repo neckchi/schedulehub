@@ -1,14 +1,14 @@
 package routers
 
 import (
+	"github.com/neckchi/schedulehub/config/controller"
+	"github.com/neckchi/schedulehub/config/domain"
+	"github.com/neckchi/schedulehub/config/service"
+	"github.com/neckchi/schedulehub/internal/middleware"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path/filepath"
-	"schedulehub/config/controller"
-	"schedulehub/config/domain"
-	"schedulehub/config/service"
-	"schedulehub/internal/middleware"
 	"time"
 )
 

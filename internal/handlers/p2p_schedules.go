@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"context"
+	"github.com/neckchi/schedulehub/external"
+	"github.com/neckchi/schedulehub/internal/database"
+	httpclient "github.com/neckchi/schedulehub/internal/http"
+	"github.com/neckchi/schedulehub/internal/middleware"
+	"github.com/neckchi/schedulehub/internal/schema"
+	env "github.com/neckchi/schedulehub/internal/secret"
 	"net/http"
-	"schedulehub/external"
-	"schedulehub/internal/database"
-	httpclient "schedulehub/internal/http"
-	"schedulehub/internal/middleware"
-	"schedulehub/internal/schema"
-	env "schedulehub/internal/secret"
 )
 
 type flushWriter struct {

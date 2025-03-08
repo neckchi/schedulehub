@@ -3,10 +3,10 @@ package interfaces
 import (
 	"context"
 	"fmt"
+	httpclient "github.com/neckchi/schedulehub/internal/http"
+	"github.com/neckchi/schedulehub/internal/schema"
+	env "github.com/neckchi/schedulehub/internal/secret"
 	log "github.com/sirupsen/logrus"
-	httpclient "schedulehub/internal/http"
-	"schedulehub/internal/schema"
-	env "schedulehub/internal/secret"
 	"time"
 )
 

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"schedulehub/internal/schema"
+	"github.com/neckchi/schedulehub/internal/schema"
 	"slices"
 )
 

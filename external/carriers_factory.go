@@ -2,11 +2,11 @@ package external
 
 import (
 	"fmt"
+	"github.com/neckchi/schedulehub/external/interfaces"
+	"github.com/neckchi/schedulehub/internal/schema"
+	env "github.com/neckchi/schedulehub/internal/secret"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"schedulehub/external/interfaces"
-	"schedulehub/internal/schema"
-	env "schedulehub/internal/secret"
 	"time"
 )
 

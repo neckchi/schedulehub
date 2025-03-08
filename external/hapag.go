@@ -4,10 +4,10 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
+	"github.com/neckchi/schedulehub/external/interfaces"
+	"github.com/neckchi/schedulehub/internal/schema"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"schedulehub/external/interfaces"
-	"schedulehub/internal/schema"
 	"time"
 )
 
