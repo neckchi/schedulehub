@@ -8,8 +8,28 @@ import (
 	"github.com/neckchi/schedulehub/internal/middleware"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
+	log "github.com/sirupsen/logrus"
 	"net/http"
+	"runtime"
 )
+
+func btoMb(b uint64) uint64 {
+	return b / 1000 / 1000
+}
+
+func PrintMemStats() {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	log.Infof("Alloc - Bytes in use by the heap: %v MB", btoMb(m.Alloc))
+	log.Infof("TotalAlloc(Memory Intensive) - The cumulative total number of bytes allocated in the heap:%v MB", btoMb(m.TotalAlloc))
+	log.Infof("Sys  - Total byte of memory obtained from the OS(included heap and non-heap in runtime): %v MB", btoMb(m.Sys))
+	log.Infof("NumGC - Total number of completed garage collection cycles:%v", m.NumGC)
+	log.Infof("Total goroutines:%v", runtime.NumGoroutine())
+}
+
+///If Alloc keeps growing without dropping, you might have a memory leak (objects aren’t being garbage-collected).
+///If HeapInuse grows but Alloc stabilizes, memory is being freed but not yet returned to the OS (normal behavior in Go).
+///If Sys approaches your EC2 instance’s RAM limit (e.g., 1 GiB for t2.micro), you’re at risk of running out of memory.
 
 type flushWriter struct {
 	http.ResponseWriter
@@ -35,88 +55,6 @@ func P2PScheduleHandler(client *httpclient.HttpClient, env *env.Manager,
 		fannedInStream := service.FanIn(scheduleChannels...)
 		service.StreamResponse(fw, r, fannedInStream)
 		go rr.Set(r.URL.String())
-		//finalSchedule, err := validateSchedules(ctx, fannedInStream, w)
-		//if err != nil {
-		//	cancel()
-		//	return
-		//}
-
-		////buildResponse(w, r, rr, queryParams, finalSchedule)
-		//buildResponse(w, r, rr, queryParams, fannedInStream)
-		//// Cache the result
-		//go rr.Set(r.URL.String())
-
-		// Check for context cancellation
 
 	})
 }
-
-//func validateSchedules(ctx context.Context, fannedInStream <-chan any, w http.ResponseWriter) ([]*schema.Schedule, error) {
-//	var finalSchedule []*schema.Schedule
-//	for result := range fannedInStream {
-//		select {
-//		case <-ctx.Done():
-//			log.Println("Validation aborted due to cancellation")
-//			return nil, ctx.Err()
-//		default:
-//			schedules, _ := result.([]*schema.Schedule)
-//			for _, schedule := range schedules {
-//				if err := schema.ResponseValidate.Struct(schedule); err != nil {
-//					if validationErrors, ok := err.(validator.ValidationErrors); ok {
-//						log.Errorf("%+v\n", validationErrors.Error())
-//						exceptions.ValidationErrorHandler(w, validationErrors)
-//						return nil, err
-//					}
-//				}
-//			}
-//			finalSchedule = append(finalSchedule, schedules...)
-//		}
-//	}
-//	return finalSchedule, nil
-//}
-
-//func buildResponse(w http.ResponseWriter, r *http.Request, rr *database.Repository, queryParams *schema.QueryParams, fannedIn <-chan any) {
-//	productID := rr.GenerateUUIDFromString("schedule product", r.URL.String())
-//	var response any
-//	var finalSchedule []*schema.Schedule
-//	for schedules := range fannedIn {
-//		finalSchedule = append(finalSchedule, schedules.([]*schema.Schedule)...)
-//	}
-//
-//	if len(finalSchedule) == 0 {
-//		response = map[string]any{
-//			"productid": productID,
-//			"details":   fmt.Sprintf("%s -> %s schedule not found", *queryParams.PointFrom, *queryParams.PointTo),
-//		}
-//	} else {
-//		response = schema.Product{
-//			ProductID:   productID,
-//			Origin:      *queryParams.PointFrom,
-//			Destination: *queryParams.PointTo,
-//			//NoOfSchedule: noOfSchedule,
-//			Schedules: finalSchedule,
-//		}
-//	}
-//	_ = json.NewEncoder(w).Encode(response)
-//}
-
-//func buildResponse(w http.ResponseWriter, r *http.Request, rr *database.Repository, queryParams *schema.QueryParams, finalSchedule []*schema.Schedule) {
-//	productID := rr.GenerateUUIDFromString("schedule product", r.URL.String())
-//	var response any
-//	noOfSchedule := len(finalSchedule)
-//	if noOfSchedule == 0 {
-//		response = map[string]any{
-//			"productid": productID,
-//			"details":   fmt.Sprintf("%s -> %s schedule not found", *queryParams.PointFrom, *queryParams.PointTo),
-//		}
-//	} else {
-//		response = schema.Product{
-//			ProductID:   productID,
-//			Origin:      *queryParams.PointFrom,
-//			Destination: *queryParams.PointTo,
-//			//NoOfSchedule: noOfSchedule,
-//			Schedules: finalSchedule,
-//		}
-//	}
-//	_ = json.NewEncoder(w).Encode(response)
-//}

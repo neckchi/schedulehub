@@ -74,14 +74,13 @@ func GenerateUUIDFromString(namespace, key string) string {
 }
 
 func (r *RedisConnection) AddToChannel(namespace, key string, value []byte, expiry time.Duration) {
-	hashKey := GenerateUUIDFromString(namespace, key)
-	r.ch <- RedisCache{cacheType: namespace, cacheKey: hashKey, cacheValue: value, expiry: expiry}
+	r.ch <- RedisCache{cacheType: namespace, cacheKey: GenerateUUIDFromString(namespace, key),
+		cacheValue: value, expiry: expiry}
 }
 
 func (r *RedisConnection) Set(watchKey string) error {
 	close(r.ch)
 	txp := func(tx *goRedis.Tx) error {
-
 		_, err := tx.TxPipelined(r.ctx, func(pipe goRedis.Pipeliner) error {
 			for data := range r.ch {
 				setRes := pipe.SetNX(r.ctx, data.cacheKey, data.cacheValue, data.expiry)
@@ -91,6 +90,7 @@ func (r *RedisConnection) Set(watchKey string) error {
 					log.Infof("Background Task:Successfully cached %s for %v", data.cacheKey, data.cacheType)
 				}
 			}
+
 			return nil
 		})
 		if err != nil {
@@ -100,9 +100,8 @@ func (r *RedisConnection) Set(watchKey string) error {
 		return nil
 	}
 
-	hashWatchKey := GenerateUUIDFromString("watchKey", watchKey)
 	for i := 0; i < maxRetries; i++ {
-		err := r.client.Watch(r.ctx, txp, hashWatchKey)
+		err := r.client.Watch(r.ctx, txp, GenerateUUIDFromString("watchKey", watchKey))
 		if err == nil {
 			// Success
 			//Reinitialize channel so we can keep adding items later using the same repository

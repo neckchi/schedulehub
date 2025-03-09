@@ -177,14 +177,14 @@ func (hc *HttpClientWrapper) Fetch(ctx context.Context, method string, urlString
 			case http.StatusOK:
 				result, err = io.ReadAll(resp.Body)
 				if err == nil {
-					go hc.redisDb.AddToChannel(namespace, request.URL.String(), result, expiry)
+					hc.redisDb.AddToChannel(namespace, request.URL.String(), result, expiry)
 					return result, nil
 				}
 
 			case http.StatusPartialContent:
 				result, err = hc.fetchPartialContent(childCtx, method, urlString, params, headers, resp)
 				if err == nil {
-					go hc.redisDb.AddToChannel(namespace, request.URL.String(), result, expiry)
+					hc.redisDb.AddToChannel(namespace, request.URL.String(), result, expiry)
 					return result, nil
 				}
 

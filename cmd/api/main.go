@@ -28,6 +28,7 @@ func main() {
 		Addr:    ":8003",
 		Handler: voyageRouter,
 	}
+
 	go func() {
 		log.Info("Starting HTTP Server on port 8004 for app config")
 		if err := configServer.ListenAndServe(); err != http.ErrServerClosed {
