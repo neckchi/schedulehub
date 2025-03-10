@@ -27,39 +27,6 @@ const (
 	EGLV CarrierCode = "EGLV"
 )
 
-//var ValidCarrier = map[CarrierCode]bool{
-//	CMDU: true,
-//	ANNU: true,
-//	CHNL: true,
-//	APLU: true,
-//	ZIMU: true,
-//	HLCU: true,
-//	MSCU: true,
-//	OOLU: true,
-//	COSU: true,
-//	ONEY: true,
-//	MAEU: true,
-//	MAEI: true,
-//	YMJA: true,
-//	EGLV: true,
-//}
-
-func CollectCarriers(scacProvider *[]CarrierCode) []CarrierCode {
-	excludedCarriers := map[CarrierCode]bool{
-		ANNU: true,
-		CHNL: true,
-	}
-	filteredCarriers := make([]CarrierCode, 0)
-	for _, scac := range *scacProvider {
-		if !excludedCarriers[scac] {
-			filteredCarriers = append(filteredCarriers, scac)
-		}
-	}
-	*scacProvider = filteredCarriers
-	return *scacProvider
-
-}
-
 // Mapping of SCAC to Internal Carrier Code
 var InternalCodeMapping = map[CarrierCode]string{
 	CMDU: "0001",

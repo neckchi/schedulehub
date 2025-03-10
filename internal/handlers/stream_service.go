@@ -11,7 +11,6 @@ import (
 	env "github.com/neckchi/schedulehub/internal/secret"
 	log "github.com/sirupsen/logrus"
 	"iter"
-	"net/http"
 	"slices"
 	"sync"
 )
@@ -46,9 +45,8 @@ func NewScheduleStreamingService(
 }
 
 func (sss *ScheduleStreamingService) GenerateScheduleChannels() []<-chan any {
-	scacList := schema.CollectCarriers(sss.queryParams.SCAC)
-	fanOutChannels := make([]<-chan any, 0, len(scacList))
-	for _, scac := range scacList {
+	fanOutChannels := make([]<-chan any, 0, len(*sss.queryParams.SCAC))
+	for _, scac := range *sss.queryParams.SCAC {
 		p2pScheduleChan := sss.ConsolidateSchedule(scac)
 		if sss.queryParams.TSP != nil || sss.queryParams.VesselIMO != nil || sss.queryParams.Service != nil || sss.queryParams.DirectOnly != nil {
 			filterSchedule := sss.FilterSchedule(p2pScheduleChan)
@@ -193,7 +191,7 @@ func (sss *ScheduleStreamingService) FanIn(channels ...<-chan any) <-chan any {
 }
 
 // StreamResponse handles the streaming of response data
-func (sss *ScheduleStreamingService) StreamResponse(w flushWriter, r *http.Request, fannedIn <-chan any) {
+func (sss *ScheduleStreamingService) StreamResponse(w flushWriter, fannedIn <-chan any) {
 	w.Write([]byte(fmt.Sprintf(
 		`{"origin":"%s","destination":"%s","schedules":[`, *sss.queryParams.PointFrom, *sss.queryParams.PointTo,
 	)))

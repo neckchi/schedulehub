@@ -53,7 +53,7 @@ func P2PScheduleHandler(client *httpclient.HttpClient, env *env.Manager,
 		service := NewScheduleStreamingService(ctx, done, client, env, p2p, &queryParams)
 		scheduleChannels := service.GenerateScheduleChannels()
 		fannedInStream := service.FanIn(scheduleChannels...)
-		service.StreamResponse(fw, r, fannedInStream)
+		service.StreamResponse(fw, fannedInStream)
 		go rr.Set(r.URL.String())
 
 	})
