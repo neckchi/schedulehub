@@ -31,9 +31,9 @@ func ScheduleRouter() http.Handler {
 		httpclient.WithMaxRetries(2), httpclient.WithRetryDelay(2*time.Second),
 		httpclient.WithMaxIdleConns(200), httpclient.WithMaxConnsPerHost(200), httpclient.WithMaxIdleConnsPerHost(200),
 		httpclient.WithIdleConnTimeout(90), httpclient.WithDisableKeepAlives(false))
-	middlewareStackForp2p := middleware.CreateStack(middleware.GetAppConfig, middleware.CheckCORS,
-		middleware.AddCorrelationID, middleware.AddHeaders, middleware.P2PQueryValidation, middleware.Logging)
-	middlewareStackForhc := middleware.CreateStack(middleware.AddCorrelationID, middleware.AddHeaders, middleware.Logging)
+	middlewareStackForp2p := middleware.CreateStack(middleware.Recovery, middleware.CheckCORS,
+		middleware.AddCorrelationID, middleware.AddHeaders, middleware.GetAppConfig, middleware.P2PQueryValidation, middleware.Logging)
+	middlewareStackForhc := middleware.CreateStack(middleware.Recovery, middleware.AddCorrelationID, middleware.AddHeaders, middleware.Logging)
 	router := http.NewServeMux()
 	//HealthCheck
 	hc := middlewareStackForhc(handlers.HealthCheckHandler())

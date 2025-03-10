@@ -27,7 +27,7 @@ func AppConfigRouter() http.Handler {
 		Config: &config,
 	}
 	//c := SetupConfig()
-	middlewareStackForrc := middleware.CreateStack(middleware.CheckCORS, middleware.AddCorrelationID, middleware.AddHeaders, middleware.Logging)
+	middlewareStackForrc := middleware.CreateStack(middleware.Recovery, middleware.CheckCORS, middleware.AddCorrelationID, middleware.AddHeaders, middleware.Logging)
 	appConfigRouter := http.NewServeMux()
 	rc := middlewareStackForrc(c.ReadConfig())
 	appConfigRouter.Handle("GET /read/{serviceName}", rc)

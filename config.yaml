@@ -4,7 +4,7 @@ base:
     host: redis
     port: 8000
 service.registry.schedule:
-  scheduleExpirt: 6
+  scheduleExpiry: 6
   activeCarriers:
     CMDU: true
     ANNU: true

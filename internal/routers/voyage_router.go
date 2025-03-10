@@ -18,7 +18,7 @@ func VoyageRouter() http.Handler {
 		ServiceName: envManager.ServiceName,
 	}
 	oracle, _ := database.NewOracleDBConnectionPool(oracleSetting, 20, 3)
-	middlewareStackForvv := middleware.CreateStack(middleware.CheckCORS, middleware.AddCorrelationID, middleware.AddHeaders, middleware.VVQueryValidation, middleware.Logging)
+	middlewareStackForvv := middleware.CreateStack(middleware.Recovery, middleware.CheckCORS, middleware.AddCorrelationID, middleware.AddHeaders, middleware.VVQueryValidation, middleware.Logging)
 	voyageRouter := http.NewServeMux()
 	//Master Vessel Voyage
 	vv := middlewareStackForvv(handlers.VoyageHandler(oracle))
