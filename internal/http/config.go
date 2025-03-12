@@ -20,15 +20,6 @@ type HttpClientWrapper struct {
 	initialRetryDelay time.Duration
 }
 
-type HTTPTransportConfig struct {
-	Timeout             time.Duration // Request timeout
-	DisableKeepAlives   bool          // Disable HTTP keep-alive
-	MaxIdleConns        int           // Maximum idle connections
-	MaxConnsPerHost     int           // Maximum connections per host
-	MaxIdleConnsPerHost int           // Maximum idle connections per host
-	TLSClientConfig     *tls.Config   // TLS configuration
-}
-
 func defaultHttpConfig(rdb database.RedisRepository) HttpClientWrapper {
 	//proxyUrl, _ := url.Parse("http://zscaler.proxy.int.kn:80")
 	t := http.DefaultTransport.(*http.Transport).Clone()

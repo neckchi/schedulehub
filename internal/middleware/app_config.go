@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
-	"github.com/neckchi/schedulehub/config/controller"
-	"github.com/neckchi/schedulehub/config/domain"
+	"github.com/neckchi/schedulehub/configs/controller"
+	"github.com/neckchi/schedulehub/configs/domain"
 	"github.com/neckchi/schedulehub/internal/exceptions"
 	log "github.com/sirupsen/logrus"
 	"net/http"

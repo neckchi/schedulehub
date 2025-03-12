@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/neckchi/schedulehub/config/domain"
+	"github.com/neckchi/schedulehub/configs/domain"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
