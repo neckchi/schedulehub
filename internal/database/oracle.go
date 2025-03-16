@@ -90,7 +90,7 @@ func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries 
 	for retry := 0; retry <= maxRetries; retry++ {
 		err = pool.db.PingContext(ctx)
 		if err == nil {
-			log.Info("Successfully created Oracle DB connection pool")
+			log.Info("Connected To Oracle DB connection pool")
 			break
 		}
 		log.Errorf("attempt %d: failed to connect to Oracle DB: %v", retry+1, err)

@@ -17,10 +17,12 @@ func VoyageRouter() http.Handler {
 		Port:        envManager.Port,
 		ServiceName: envManager.ServiceName,
 	}
-	oracle, _ := database.NewOracleDBConnectionPool(oracleSetting, 20, 3)
+	oracle, err := database.NewOracleDBConnectionPool(oracleSetting, 20, 3)
+	if err != nil {
+		panic(err)
+	}
 	middlewareStackForvv := middleware.CreateStack(middleware.Recovery, middleware.CheckCORS, middleware.AddCorrelationID, middleware.AddHeaders, middleware.VVQueryValidation, middleware.Logging)
 	voyageRouter := http.NewServeMux()
-	//Master Vessel Voyage
 	vv := middlewareStackForvv(handlers.VoyageHandler(oracle))
 	voyageRouter.Handle("GET /schedules/vv", vv)
 	return voyageRouter

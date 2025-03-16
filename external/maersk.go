@@ -166,21 +166,10 @@ func (maeusp *MaerskScheduleResponse) GenerateEventDate(legDetails *TransportLeg
 	eta := legDetails.ArrivalDateTime
 	transitTime := CalculateTransitTime(&etd, &eta)
 
-	//var cutoffs *schema.Cutoff
-	//if cyCutoffDate != "" || docCutoffDate != "" || vgmCutoffDate != "" {
-	//	cutoffs = &schema.Cutoff{
-	//		CyCutoffDate:  cyCutoffDate,
-	//		DocCutoffDate: docCutoffDate,
-	//		VgmCutoffDate: vgmCutoffDate,
-	//	}
-	//
-	//}
-
 	eventTime := &schema.Leg{
 		Etd:         etd,
 		Eta:         eta,
 		TransitTime: transitTime,
-		//Cutoffs:     cutoffs,
 	}
 
 	return eventTime

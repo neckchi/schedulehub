@@ -13,7 +13,10 @@ import (
 )
 
 func ScheduleRouter() http.Handler {
-	envManager, _ := env.NewManager()
+	envManager, err := env.NewManager()
+	if err != nil {
+		panic(err)
+	}
 	log.SetFormatter(&middleware.CustomLogFormatter{})
 	externalApiConfig := external.NewScheduleServiceFactory(envManager)
 
@@ -25,7 +28,10 @@ func ScheduleRouter() http.Handler {
 		Port:       envManager.RedisPort,
 		Protocol:   envManager.RedisPrtl,
 	}
-	redis := database.NewRedisConnection(redisSettings)
+	redis, err := database.NewRedisConnection(redisSettings)
+	if err != nil {
+		panic(err)
+	}
 	//We cant change any connection pool config without restarting the server so we have to change them by request if necessary.
 	httpClient := httpclient.CreateHttpClientInstance(redis, httpclient.WithCtxTimeout(7*time.Second),
 		httpclient.WithMaxRetries(2), httpclient.WithRetryDelay(2*time.Second),

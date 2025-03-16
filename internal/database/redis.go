@@ -44,7 +44,7 @@ type RedisCache struct {
 }
 
 // Constructor to create an instance of redis respository with connection pool setup
-func NewRedisConnection(settings RedisSettings) *RedisConnection {
+func NewRedisConnection(settings RedisSettings) (*RedisConnection, error) {
 	ctx := context.Background()
 	redisClient := goRedis.NewClient(&goRedis.Options{
 		Addr: *settings.Host + ":" + *settings.Port,
@@ -55,7 +55,7 @@ func NewRedisConnection(settings RedisSettings) *RedisConnection {
 		PoolSize: poolSize,
 	})
 	if err := redisClient.Ping(ctx).Err(); err != nil {
-		log.Error(err)
+		return nil, err
 	} else {
 		log.Infof("Connected to Redis - %s", redisClient)
 	}
@@ -63,7 +63,7 @@ func NewRedisConnection(settings RedisSettings) *RedisConnection {
 		client: redisClient,
 		ctx:    context.Background(),
 		ch:     make(chan RedisCache, 50),
-	}
+	}, nil
 }
 
 func GenerateUUIDFromString(namespace, key string) string {
@@ -129,6 +129,6 @@ func (r *RedisConnection) Get(namespace, key string) ([]byte, bool) {
 		log.Errorf("error getting value %v", err.Error())
 		return nil, false
 	}
-	log.Printf("Background Task: %s with key: %s exist", namespace, hashKey)
+	log.Infof("Background Task: %s with key: %s exist", namespace, hashKey)
 	return storedValue, true
 }
