@@ -5,38 +5,58 @@ import (
 	"slices"
 )
 
-func ScheduleFilters(schedule *schema.Schedule, query *schema.QueryParams) bool {
-	result := true
-	if query.DirectOnly != nil {
-		result = result && (!schedule.Transshipment == *query.DirectOnly)
-	}
+type ScheduleFilterOption func(*schema.Schedule, *schema.QueryParams) bool
 
-	// Define post filter functions in a map with string pointer to query parameters
-	filters := map[*string]func() bool{
-		query.TSP: func() bool {
+func WithDirectOnly() ScheduleFilterOption {
+	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+		if query.DirectOnly != nil {
+			return !schedule.Transshipment == *query.DirectOnly
+		}
+		return true
+	}
+}
+
+func WithTSP() ScheduleFilterOption {
+	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+		if query.TSP != nil {
 			return slices.ContainsFunc(schedule.Legs[1:], func(leg *schema.Leg) bool {
 				return leg.PointFrom.LocationCode == *query.TSP ||
 					leg.PointTo.LocationCode == *query.TSP
 			})
-		},
-		query.VesselIMO: func() bool {
+		}
+		return true
+	}
+}
+
+func WithVesselIMO() ScheduleFilterOption {
+	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+		if query.VesselIMO != nil {
 			return slices.ContainsFunc(schedule.Legs, func(leg *schema.Leg) bool {
 				return leg.Transportations.Reference == *query.VesselIMO
 			})
-		},
-		query.Service: func() bool {
+		}
+		return true
+	}
+}
+
+func WithService() ScheduleFilterOption {
+	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+		if query.Service != nil {
 			return slices.ContainsFunc(schedule.Legs, func(leg *schema.Leg) bool {
 				return leg.Services.ServiceCode != nil &&
 					*leg.Services.ServiceCode == *query.Service
 			})
-		},
-	}
-
-	for param, filterFunc := range filters {
-		if param != nil {
-			result = result && filterFunc()
 		}
+		return true
 	}
+}
 
-	return result
+func ScheduleFilters(opts ...ScheduleFilterOption) ScheduleFilterOption {
+	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+		result := true
+		for _, opt := range opts {
+			result = result && opt(schedule, query)
+		}
+		return result
+	}
 }

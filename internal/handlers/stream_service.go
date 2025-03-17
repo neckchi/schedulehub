@@ -49,7 +49,8 @@ func (sss *ScheduleStreamingService) GenerateScheduleChannels() []<-chan any {
 	for _, scac := range *sss.queryParams.SCAC {
 		p2pScheduleChan := sss.ConsolidateSchedule(scac)
 		if sss.queryParams.TSP != nil || sss.queryParams.VesselIMO != nil || sss.queryParams.Service != nil || sss.queryParams.DirectOnly != nil {
-			filterSchedule := sss.FilterSchedule(p2pScheduleChan)
+			compositeFilter := ScheduleFilters(WithDirectOnly(), WithTSP(), WithVesselIMO(), WithService())
+			filterSchedule := sss.FilterSchedule(p2pScheduleChan, compositeFilter)
 			fanOutChannels = append(fanOutChannels, sss.ValidateSchedules(filterSchedule))
 		} else {
 			fanOutChannels = append(fanOutChannels, sss.ValidateSchedules(p2pScheduleChan))
@@ -91,37 +92,32 @@ func (sss *ScheduleStreamingService) ConsolidateSchedule(scac schema.CarrierCode
 	return stream
 }
 
-// Gather schedule and filter it based on the query
-func (sss *ScheduleStreamingService) PostFilter(schedules []*schema.Schedule,
-	filters func(schedule *schema.Schedule, query *schema.QueryParams) bool) iter.Seq[*schema.Schedule] {
+func (sss *ScheduleStreamingService) PostFilter(schedules []*schema.Schedule, filter ScheduleFilterOption) iter.Seq[*schema.Schedule] {
 	return func(yield func(*schema.Schedule) bool) {
 		for _, schedule := range schedules {
-			if filters(schedule, sss.queryParams) && !yield(schedule) {
+			if filter(schedule, sss.queryParams) && !yield(schedule) {
 				return
 			}
-
 		}
 	}
 }
 
-func (sss *ScheduleStreamingService) FilterSchedule(stream <-chan []*schema.Schedule) <-chan []*schema.Schedule {
+func (sss *ScheduleStreamingService) FilterSchedule(stream <-chan []*schema.Schedule, filter ScheduleFilterOption) <-chan []*schema.Schedule {
 	out := make(chan []*schema.Schedule)
 
 	go func() {
 		defer close(out)
-		for schedule := range stream {
+		for schedules := range stream {
 			select {
 			case <-sss.done:
 				return
 			case <-sss.ctx.Done():
 				return
-			case out <- slices.Collect(sss.PostFilter(schedule, ScheduleFilters)):
+			case out <- slices.Collect(sss.PostFilter(schedules, filter)):
 			}
-
 		}
 	}()
 	return out
-
 }
 
 // ValidateSchedules validates the schedules and returns a channel

@@ -37,6 +37,12 @@ type OracleDBConnectionPool struct {
 // NewOracleDBConnectionPool creates a new instance of OracleDBConnectionPool
 func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries int) (*OracleDBConnectionPool, error) {
 	//instead of fetching rows one by one, we fetch multiple rows in one network operation
+
+	if settings.DBUser == nil || settings.DBPassword == nil || settings.Host == nil ||
+		settings.Port == nil || settings.ServiceName == nil {
+		return nil, fmt.Errorf("all OracleSettings fields must be specified")
+	}
+
 	urlOptions := map[string]string{
 		"PREFETCH_ROWS": "500",
 	}
@@ -50,7 +56,7 @@ func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries 
 		if err == nil {
 			break
 		}
-		log.Errorf("attempt %d: error opening database connection: %v", retry+1, err)
+		log.Errorf("attempt %d: error create database connection pool: %v", retry+1, err)
 		if retry < maxRetries {
 			time.Sleep(time.Second * time.Duration(retry+1)) // Exponential backoff
 		}
@@ -70,19 +76,6 @@ func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries 
 		concurrency: concurrency,
 		maxRetries:  maxRetries,
 	}
-	// Read SQL query once and prepare it
-	queryString, err := pool.getSQLquery()
-	if err != nil {
-		db.Close()
-		return nil, err
-	}
-	//stmt will be bound to a single underlying connection forever. https://pkg.go.dev/database/sql#Stmt
-	stmt, err := db.PrepareContext(context.Background(), string(queryString))
-	if err != nil {
-		db.Close()
-		return nil, err
-	}
-	pool.stmt = stmt
 
 	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -91,6 +84,21 @@ func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries 
 		err = pool.db.PingContext(ctx)
 		if err == nil {
 			log.Info("Connected To Oracle DB connection pool")
+
+			// Read SQL query once and prepare it
+			queryString, err := pool.getSQLquery()
+			if err != nil {
+				db.Close()
+				return nil, fmt.Errorf("failed to get SQL script:%s", err)
+			}
+			//stmt will be bound to a single underlying connection forever. https://pkg.go.dev/database/sql#Stmt
+
+			stmt, err := db.PrepareContext(context.Background(), string(queryString))
+			if err != nil {
+				db.Close()
+				return nil, fmt.Errorf("failed to prepare context for SQL script:%s", err)
+			}
+			pool.stmt = stmt
 			break
 		}
 		log.Errorf("attempt %d: failed to connect to Oracle DB: %v", retry+1, err)

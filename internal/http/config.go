@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-//grpc design pattern for config mgt
+//grpc design pattern(func opton pattern) for config mgt
 
-type HttpFunc func(*HttpClientWrapper)
+type HttpFuncOption func(*HttpClientWrapper)
 
 type HttpClientWrapper struct {
 	client            *http.Client
@@ -64,25 +64,25 @@ func defaultHttpConfig(rdb database.RedisRepository) HttpClientWrapper {
 	}
 }
 
-func WithCtxTimeout(ctxTimeout time.Duration) HttpFunc {
+func WithCtxTimeout(ctxTimeout time.Duration) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		httpConfig.contextTimeout = ctxTimeout
 	}
 }
 
-func WithMaxRetries(maxRetries int) HttpFunc {
+func WithMaxRetries(maxRetries int) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		httpConfig.maxRetries = maxRetries
 	}
 }
 
-func WithRetryDelay(delay time.Duration) HttpFunc {
+func WithRetryDelay(delay time.Duration) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		httpConfig.initialRetryDelay = delay
 	}
 }
 
-func WithMaxIdleConns(max int) HttpFunc {
+func WithMaxIdleConns(max int) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		if httpClient, ok := interface{}(httpConfig.client).(*http.Client); ok {
 			if transport, ok := httpClient.Transport.(*http.Transport); ok {
@@ -92,7 +92,7 @@ func WithMaxIdleConns(max int) HttpFunc {
 	}
 }
 
-func WithMaxConnsPerHost(max int) HttpFunc {
+func WithMaxConnsPerHost(max int) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		if httpClient, ok := interface{}(httpConfig.client).(*http.Client); ok {
 			if transport, ok := httpClient.Transport.(*http.Transport); ok {
@@ -102,7 +102,7 @@ func WithMaxConnsPerHost(max int) HttpFunc {
 	}
 }
 
-func WithMaxIdleConnsPerHost(max int) HttpFunc {
+func WithMaxIdleConnsPerHost(max int) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		if httpClient, ok := interface{}(httpConfig.client).(*http.Client); ok {
 			if transport, ok := httpClient.Transport.(*http.Transport); ok {
@@ -112,7 +112,7 @@ func WithMaxIdleConnsPerHost(max int) HttpFunc {
 	}
 }
 
-func WithIdleConnTimeout(timeout time.Duration) HttpFunc {
+func WithIdleConnTimeout(timeout time.Duration) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		if httpClient, ok := interface{}(httpConfig.client).(*http.Client); ok {
 			if transport, ok := httpClient.Transport.(*http.Transport); ok {
@@ -122,7 +122,7 @@ func WithIdleConnTimeout(timeout time.Duration) HttpFunc {
 	}
 }
 
-func WithDisableKeepAlives(disable bool) HttpFunc {
+func WithDisableKeepAlives(disable bool) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		if httpClient, ok := interface{}(httpConfig.client).(*http.Client); ok {
 			if transport, ok := httpClient.Transport.(*http.Transport); ok {
@@ -132,7 +132,7 @@ func WithDisableKeepAlives(disable bool) HttpFunc {
 	}
 }
 
-func WithProxySetup(proxyAddress *url.URL) HttpFunc {
+func WithProxySetup(proxyAddress *url.URL) HttpFuncOption {
 	return func(httpConfig *HttpClientWrapper) {
 		if httpClient, ok := interface{}(httpConfig.client).(*http.Client); ok {
 			if transport, ok := httpClient.Transport.(*http.Transport); ok {
@@ -147,7 +147,7 @@ type HttpClient struct {
 }
 
 // Constructor to create an instance of the HttpClientWrapper with connection pool setup
-func CreateHttpClientInstance(rdb database.RedisRepository, httpConfig ...HttpFunc) *HttpClient {
+func CreateHttpClientInstance(rdb database.RedisRepository, httpConfig ...HttpFuncOption) *HttpClient {
 	d := defaultHttpConfig(rdb)
 	for _, fn := range httpConfig {
 		fn(&d)

@@ -23,6 +23,7 @@ func VoyageRouter() http.Handler {
 	}
 	middlewareStackForvv := middleware.CreateStack(middleware.Recovery, middleware.CheckCORS, middleware.AddCorrelationID, middleware.AddHeaders, middleware.VVQueryValidation, middleware.Logging)
 	voyageRouter := http.NewServeMux()
+
 	vv := middlewareStackForvv(handlers.VoyageHandler(oracle))
 	voyageRouter.Handle("GET /schedules/vv", vv)
 	return voyageRouter
