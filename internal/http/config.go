@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//grpc design pattern(func opton pattern) for config mgt
+//grpc design pattern(func option pattern) for config mgt
 
 type HttpFuncOption func(*HttpClientWrapper)
 
@@ -21,7 +21,6 @@ type HttpClientWrapper struct {
 }
 
 func defaultHttpConfig(rdb database.RedisRepository) HttpClientWrapper {
-	//proxyUrl, _ := url.Parse("http://zscaler.proxy.int.kn:80")
 	t := http.DefaultTransport.(*http.Transport).Clone()
 	t.MaxIdleConns = 100
 	t.MaxConnsPerHost = 100
