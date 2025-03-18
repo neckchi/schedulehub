@@ -68,8 +68,8 @@ func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries 
 	// Configure connection pool
 	db.SetMaxOpenConns(concurrency)
 	db.SetMaxIdleConns(100)
-	db.SetConnMaxIdleTime(10 * time.Minute)
-	db.SetConnMaxLifetime(20 * time.Minute)
+	db.SetConnMaxIdleTime(20 * time.Minute)
+	db.SetConnMaxLifetime(30 * time.Minute)
 
 	pool := &OracleDBConnectionPool{
 		db:          db,

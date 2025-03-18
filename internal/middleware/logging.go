@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -48,11 +49,20 @@ func (e *extendWriter) WriteHeader(statusCode int) {
 	e.statusCode = statusCode
 }
 
+var (
+	customizeOnce   sync.Once
+	customFormatter *CustomLogFormatter
+)
+
 func Logging(next http.Handler) http.Handler {
+	customizeOnce.Do(func() {
+		customFormatter = &CustomLogFormatter{}
+		log.SetFormatter(customFormatter)
+	})
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		startTime := time.Now()
 		cid := r.Context().Value(correlationIDKey).(string)
-		log.SetFormatter(&CustomLogFormatter{correlationID: cid})
+		customFormatter.correlationID = cid
 		extendedWriter := &extendWriter{
 			ResponseWriter: w,
 			statusCode:     http.StatusOK,

@@ -75,7 +75,7 @@ func findDuplicates(sqlResults []schema.ScheduleRow) map[groupKey]bool {
 }
 
 func getUniqueVoyageNumbers(sqlResults []schema.ScheduleRow, voyage *string) []string {
-	uniqueVoyageNumbers := make([]string, 0)
+	uniqueVoyageNumbers := make([]string, 0, 2)
 	voyageSet := make(map[string]bool)
 	for _, result := range sqlResults {
 		if result.VoyageNum != *voyage && !voyageSet[result.VoyageNum] {
@@ -87,8 +87,8 @@ func getUniqueVoyageNumbers(sqlResults []schema.ScheduleRow, voyage *string) []s
 }
 
 func getUniqueBoundsAndKeys(sqlResults []schema.ScheduleRow, duplicates *map[groupKey]bool) ([]string, []string) {
-	uniqueBounds := make([]string, 0)
-	uniqueKeys := make([]string, 0)
+	uniqueBounds := make([]string, 0, 2)
+	uniqueKeys := make([]string, 0, 2)
 	if len(*duplicates) > 0 {
 		boundsSet := make(map[string]bool)
 		voyageKeySet := make(map[string]bool)

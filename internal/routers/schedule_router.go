@@ -7,7 +7,6 @@ import (
 	"github.com/neckchi/schedulehub/internal/http"
 	"github.com/neckchi/schedulehub/internal/middleware"
 	"github.com/neckchi/schedulehub/internal/secret"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 )
@@ -17,9 +16,7 @@ func ScheduleRouter() http.Handler {
 	if err != nil {
 		panic(err)
 	}
-	log.SetFormatter(&middleware.CustomLogFormatter{})
 	externalApiConfig := external.NewScheduleServiceFactory(envManager)
-
 	redisSettings := database.RedisSettings{
 		DB:         envManager.RedisDb,
 		DBUser:     envManager.RedisUser,

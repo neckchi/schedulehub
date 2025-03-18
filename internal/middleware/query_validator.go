@@ -49,7 +49,7 @@ func P2PQueryValidation(next http.Handler) http.Handler {
 			}
 		}
 
-		activeCarrierCodes := make([]schema.CarrierCode, 0)
+		activeCarrierCodes := make([]schema.CarrierCode, 0, 15)
 		scacConfig := r.Context().Value("appConfig").(map[string]interface{})["activeCarriers"]
 		excludedCarriers := map[schema.CarrierCode]bool{
 			schema.ANNU: true,
