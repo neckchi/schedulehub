@@ -68,7 +68,7 @@ func (sss *ScheduleStreamingService) FetchCarrierSchedule(scac schema.CarrierCod
 	}
 	service, err := sss.p2p.CreateScheduleService(scac)
 	if err != nil {
-		log.Errorf("Failed to create schedule service: %w", err)
+		log.Errorf("Failed to create schedule service: %s", err)
 		return nil
 	}
 	schedules, _ := service.FetchSchedule(sss.ctx, sss.client, sss.env, sss.queryParams, scac)
@@ -188,7 +188,7 @@ func (sss *ScheduleStreamingService) FanIn(channels ...<-chan any) <-chan any {
 
 // StreamResponse handles the streaming of response data
 func (sss *ScheduleStreamingService) StreamResponse(w flushWriter, fannedIn <-chan any) {
-	w.Write([]byte(fmt.Sprintf(
+	_, _ = w.Write([]byte(fmt.Sprintf(
 		`{"origin":"%s","destination":"%s","schedules":[`, *sss.queryParams.PointFrom, *sss.queryParams.PointTo,
 	)))
 	w.Flush() // Flush data right away
@@ -209,11 +209,11 @@ func (sss *ScheduleStreamingService) StreamResponse(w flushWriter, fannedIn <-ch
 				scheduleBatch, _ := schedules.([]*schema.Schedule)
 				for _, schedule := range scheduleBatch {
 					if !first {
-						w.Write([]byte(","))
+						_, _ = w.Write([]byte(","))
 					}
 					first = false
 					scheduleJSON, _ := json.Marshal(schedule) // this need to be changed
-					w.Write(scheduleJSON)
+					_, _ = w.Write(scheduleJSON)
 					w.Flush()
 					scheduleCount++
 				}
@@ -223,9 +223,9 @@ func (sss *ScheduleStreamingService) StreamResponse(w flushWriter, fannedIn <-ch
 
 	<-doneProcessing // Block until goroutine finishes (ensures JSON is properly closed)
 	if scheduleCount == 0 {
-		w.Write([]byte(`],"message":"No available schedules for the requested route."}`))
+		_, _ = w.Write([]byte(`],"message":"No available schedules for the requested route."}`))
 	} else {
-		w.Write([]byte(`]}`))
+		_, _ = w.Write([]byte(`]}`))
 	}
 	w.Flush()
 }

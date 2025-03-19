@@ -230,8 +230,7 @@ func (hsp *HapagScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArg
 			return "", "", fmt.Errorf("failed to parse date: %w", err)
 		}
 		startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
-		var endDate time.Time
-		endDate = startDate.AddDate(0, 0, *q.SearchRange*7)
+		endDate := startDate.AddDate(0, 0, *q.SearchRange*7)
 		startTime = startDate.Format(queryTimeFormat)
 		endTime = endDate.Format(queryTimeFormat)
 		return startTime, endTime, nil
@@ -257,7 +256,7 @@ func (hsp *HapagScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArg
 		scheduleParams["arrivalDateTime:gte"] = startDate
 		scheduleParams["arrivalDateTime:lte"] = endDate
 	}
-	headerParams := interfaces.HeaderParams{scheduleHeaders, scheduleParams}
+	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 	return headerParams
 
 }

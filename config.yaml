@@ -6,7 +6,7 @@ base:
 service.registry.schedule:
   scheduleExpiry: 6
   activeCarriers:
-    CMDU: true
+    CMDU: false
     ANNU: true
     CHNL: true
     APLU: true

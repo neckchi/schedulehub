@@ -12,9 +12,9 @@ func HealthCheckHandler() http.Handler {
 		responseBody := map[string]string{"message": "Health check successful"}
 		responseJSON, err := json.Marshal(responseBody)
 		if err != nil {
-			failedCheck := fmt.Errorf("health check failed: %s", err)
+			failedCheck := fmt.Errorf("health check failed in json marshal %s", err)
 			exceptions.InternalErrorHandler(w, failedCheck)
 		}
-		w.Write(responseJSON)
+		_, _ = w.Write(responseJSON)
 	})
 }

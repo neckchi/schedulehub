@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/neckchi/schedulehub/configs/domain"
 	"github.com/neckchi/schedulehub/internal/exceptions"
 	"net/http"
@@ -23,6 +22,6 @@ func (c *Controller) ReadConfig() http.Handler {
 		if err != nil {
 			exceptions.InternalErrorHandler(w, err)
 		}
-		fmt.Fprintf(w, string(rsp))
+		_, _ = w.Write(rsp)
 	})
 }

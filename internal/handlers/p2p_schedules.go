@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/internal/database"
+	"github.com/neckchi/schedulehub/internal/exceptions"
 	httpclient "github.com/neckchi/schedulehub/internal/http"
 	"github.com/neckchi/schedulehub/internal/middleware"
 	"github.com/neckchi/schedulehub/internal/schema"
@@ -54,7 +55,11 @@ func P2PScheduleHandler(client *httpclient.HttpClient, env *env.Manager,
 		scheduleChannels := service.GenerateScheduleChannels()
 		fannedInStream := service.FanIn(scheduleChannels...)
 		service.StreamResponse(fw, fannedInStream)
-		go rr.Set(r.URL.String())
-
+		go func() {
+			err := rr.Set(r.URL.String())
+			if err != nil {
+				exceptions.InternalErrorHandler(w, err)
+			}
+		}()
 	})
 }

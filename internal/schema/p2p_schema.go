@@ -12,23 +12,24 @@ func init() {
 	ResponseValidate = validator.New(validator.WithRequiredStructEnabled())
 
 	// Function to validate if a string is in ISO8601 format
-	ResponseValidate.RegisterValidation("isValidDate", func(fl validator.FieldLevel) bool {
+	errDate := ResponseValidate.RegisterValidation("isValidDate", func(fl validator.FieldLevel) bool {
 		const layout1 = "2006-01-02T15:04:05"
 		value := fl.Field().String()
 		_, err := time.Parse(layout1, value)
 		return err == nil
 	})
+	if errDate != nil {
+		return
+	}
 
-	ResponseValidate.RegisterValidation("portCodeValidation", func(fl validator.FieldLevel) bool {
+	errPort := ResponseValidate.RegisterValidation("portCodeValidation", func(fl validator.FieldLevel) bool {
 		regex := regexp.MustCompile(`^[A-Z]{2}[A-Z0-9]{3}$`)
 		value := fl.Field().String()
 		return regex.MatchString(value)
 	})
-
-	//ResponseValidate.RegisterValidation("isValidCarrier", func(fl validator.FieldLevel) bool {
-	//	value := fl.Field().String()
-	//	return ActiveCarrier[CarrierCode(value)]
-	//})
+	if errPort != nil {
+		return
+	}
 
 	ResponseValidate.RegisterStructValidation(TransportationValidation, Transportation{})
 	ResponseValidate.RegisterStructValidation(LegEventDateValidation, Leg{})

@@ -273,7 +273,7 @@ func (msp *MscScheduleResponse) TokenHeaderParams(e *env.Manager) interfaces.Hea
 	tokenParams := map[string]string{"scope": *e.MscScope, "client_id": *e.MscClient,
 		"client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
 		"grant_type":            "client_credentials", "client_assertion": signedToken}
-	headerParams := interfaces.HeaderParams{tokenHeaders, tokenParams}
+	headerParams := interfaces.HeaderParams{Headers: tokenHeaders, Params: tokenParams}
 	return headerParams
 }
 
@@ -298,6 +298,6 @@ func (msp *MscScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs)
 	} else {
 		scheduleParams["datesRelated"] = "POD"
 	}
-	headerParams := interfaces.HeaderParams{scheduleHeaders, scheduleParams}
+	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 	return headerParams
 }

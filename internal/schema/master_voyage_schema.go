@@ -8,22 +8,22 @@ var EventType = map[string]string{
 
 type Port struct {
 	PortName string `json:"portName,omitempty"`
-	PortCode string `json:"portCode"`
+	PortCode string `json:"portCode" validate:"required,portCodeValidation"`
 }
 
 type PortCalls struct {
-	Seq          int         `json:"seq"`
-	Key          interface{} `json:"key"`
-	Bound        interface{} `json:"bound"`
-	Voyage       interface{} `json:"voyage"`
-	PortEvent    string      `json:"portEvent"`
-	Port         Port        `json:"port,required,portCodeValidation"`
-	EstimateDate string      `json:"estimateDate"`
+	Seq          int         `json:"seq" validate:"required"`
+	Key          interface{} `json:"key" validate:"required"`
+	Bound        interface{} `json:"bound" validate:"required"`
+	Voyage       interface{} `json:"voyage" validate:"required"`
+	PortEvent    string      `json:"portEvent" validate:"required"`
+	Port         Port        `json:"port" validate:"required"`
+	EstimateDate string      `json:"estimateDate" validate:"required"`
 }
 
 type VesselDetails struct {
-	VesselName string `json:"vesselName,required"`
-	Imo        string `json:"imo,required"`
+	VesselName string `json:"vesselName" validate:"required"`
+	Imo        string `json:"imo" validate:"required"`
 }
 
 type Services struct {
@@ -31,12 +31,12 @@ type Services struct {
 }
 
 type MasterVoyage struct {
-	Scac       string        `json:"scac,isValidCarrier"`
-	Voyage     string        `json:"voyage"`
+	Scac       string        `json:"scac" validate:"required"`
+	Voyage     string        `json:"voyage" validate:"required"`
 	NextVoyage string        `json:"nextVoyage,omitempty"`
-	Vessel     VesselDetails `json:"vessel"`
+	Vessel     VesselDetails `json:"vessel" validate:"required"`
 	Services   Services      `json:"services"`
-	Calls      []PortCalls   `json:"calls"`
+	Calls      []PortCalls   `json:"calls" `
 }
 
 type ScheduleRow struct {

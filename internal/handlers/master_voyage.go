@@ -40,11 +40,11 @@ func VoyageHandler(or database.OracleRepository) http.Handler {
 			if err != nil {
 				errMsg := fmt.Errorf("JSON marshaling failed: %v", err)
 				exceptions.InternalErrorHandler(w, errMsg)
-				return
 			}
-			w.Write(jsonBytes)
+			_, _ = w.Write(jsonBytes)
+
 		} else {
-			w.Write([]byte(`{"message":"No available vessel voyage"}`))
+			_, _ = w.Write([]byte(`{"message":"No available vessel voyage"}`))
 		}
 	})
 }

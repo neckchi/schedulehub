@@ -209,9 +209,7 @@ func (maeusp *MaerskScheduleResponse) GenerateTransport(legDetails *TransportLeg
 func (maeusp *MaerskScheduleResponse) GenerateVoyageService(legDetails *TransportLeg) *schema.Leg {
 	sc := cmp.Or(legDetails.Transport.CarrierServiceName, legDetails.Transport.CarrierServiceCode)
 	vn := legDetails.Transport.CarrierDepartureVoyageNumber
-	var voyage *schema.Voyage
-
-	voyage = &schema.Voyage{
+	voyage := &schema.Voyage{
 		InternalVoyage: cmp.Or(vn, "TBN"),
 	}
 
@@ -238,7 +236,7 @@ func (maeusp *MaerskScheduleResponse) LocationHeaderParams(e *env.Manager, port 
 		"locationType":   "CITY",
 		"UNLocationCode": port,
 	}
-	headerParams := interfaces.HeaderParams{locationHeaders, locationParams}
+	headerParams := interfaces.HeaderParams{Headers: locationHeaders, Params: locationParams}
 	return headerParams
 }
 
@@ -264,7 +262,7 @@ func (maeusp *MaerskScheduleResponse) ScheduleHeaderParams(p *interfaces.Schedul
 		scheduleParams["startDateType"] = "A"
 	}
 
-	headerParams := interfaces.HeaderParams{scheduleHeaders, scheduleParams}
+	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 
 	return headerParams
 }

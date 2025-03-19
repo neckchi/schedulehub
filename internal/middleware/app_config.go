@@ -19,6 +19,10 @@ var (
 	config     domain.Config
 )
 
+type appConfig string
+
+const scheduleConfig appConfig = "scheduleConfig"
+
 func GetAppConfig(next http.Handler) http.Handler {
 	var err error
 	// this will be called once. it wont spawn as many goroutine as the incoming request
@@ -44,7 +48,7 @@ func GetAppConfig(next http.Handler) http.Handler {
 			exceptions.InternalErrorHandler(w, err)
 			return
 		}
-		ctx := context.WithValue(r.Context(), "appConfig", result)
+		ctx := context.WithValue(r.Context(), scheduleConfig, result)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)

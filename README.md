@@ -16,7 +16,7 @@ Other Carriers currently do not offer such an API.
 
 Tested under Go 1.23.2.
 
-For a list of dependencies, please refer to go.mod . Keep in mind that all the original json response are cached in a RedisDB 
+For a list of dependencies, please refer to go.mod . Keep in mind that all the original json response are cached in a RedisDB
 
 **TODO:** Currently the .env file contains several secrets, these should be removed from there. Locally the need to be
 stored in a gitignored file, in OCP they can be provided via Secret.
@@ -27,16 +27,28 @@ stored in a gitignored file, in OCP they can be provided via Secret.
 
 * go to `cicd/terraform/environment/<env>`
 * next command add correct KMS Arn, profile and path env
-* sops -d --in-place --kms arn:aws:kms:eu-central-1:934536729814:key/00000000-0000-0000-0000-000000000000 --aws-profile [<env> profile] environments/<env>/secrets.yaml
+* sops -d --in-place --kms arn:aws:kms:eu-xxxxx-1:934512312312313:key/00000000-0000-0000-0000-000000000000 --aws-profile [<env> profile] environments/<env>/secrets.yaml
 * duplicate `.env.example` and rename to `.env`, copy the decrypted values to `.env`
 
 
 ## Run Go Application locally with IntelliJ,Redis
 
+Reference: https://tutorialedge.net/golang/makefiles-for-go-developers/
+
+Basically you can make use of Makefile to automate all the task.
+
+if you d like to check the code quality like lint and dependencies and reformat the code , please use 'make check-quality' in Ubuntu terminal.
+
+if you d like to compile and run the application, please use 'make run' in Ubuntu terminal.
+
+if you d like to clean out the binary file, please use 'make clean'in Ubuntu terminal.
+
+There are so many 'target' we can use. For the details,please check the MakeFile
+
 ### Dependencies:
 
 * go 1.23.2 or higher
-* Redis (Local with Docker - Optional)
+* Redis 
 
 ### Step 0. Install with Docker Redis before start:
 
@@ -57,9 +69,7 @@ stored in a gitignored file, in OCP they can be provided via Secret.
 
 ### Step 2. Run this command:
 
-* go run ./cmd/api
-
-
+* make run
 
 
 * Example - P2P Schedule API hub

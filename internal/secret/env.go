@@ -195,7 +195,6 @@ func (m *Manager) LoadEnvFile(filePath string) error {
 func (m *Manager) Get(key string) (string, bool) {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
-
 	value, exists := m.envVars[key]
 	return value, exists
 }

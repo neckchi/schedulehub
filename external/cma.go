@@ -319,7 +319,7 @@ func (csp *CmaScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs)
 	} else {
 		scheduleParams["arrivalDate"] = *p.Query.StartDate
 	}
-	headerParams := interfaces.HeaderParams{scheduleHeaders, scheduleParams}
+	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 	return headerParams
 
 }

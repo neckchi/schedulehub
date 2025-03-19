@@ -13,34 +13,34 @@ func init() {
 	RequestValidate = validator.New(validator.WithRequiredStructEnabled())
 
 	// Function to check if port code is valid format
-	RequestValidate.RegisterValidation("portCodeValidation", func(fl validator.FieldLevel) bool {
+	errPort := RequestValidate.RegisterValidation("portCodeValidation", func(fl validator.FieldLevel) bool {
 		regex := regexp.MustCompile(`^[A-Z]{2}[A-Z0-9]{3}$`)
 		value := fl.Field().String()
 		return regex.MatchString(value)
 	})
+	if errPort != nil {
+		return
+	}
 
 	// Function to check if a string is in the YYYY-MM-DD format
-	RequestValidate.RegisterValidation("isValidDate", func(fl validator.FieldLevel) bool {
+	errDate := RequestValidate.RegisterValidation("isValidDate", func(fl validator.FieldLevel) bool {
 		const layout = "2006-01-02"
 		value := fl.Field().String()
 		_, err := time.Parse(layout, value)
 		return err == nil
 	})
+	if errDate != nil {
+		return
+	}
 
-	//RequestValidate.RegisterValidation("isValidCarrier", func(fl validator.FieldLevel) bool {
-	//	value := fl.Field().String()
-	//	if value != "" {
-	//		return ActiveCarrier[CarrierCode(value)]
-	//	} else {
-	//		return true
-	//	}
-	//})
-
-	RequestValidate.RegisterValidation("isVesselFlag", func(fl validator.FieldLevel) bool {
+	errFlag := RequestValidate.RegisterValidation("isVesselFlag", func(fl validator.FieldLevel) bool {
 		regex := regexp.MustCompile(`^[A-Z]{2}$`)
 		value := fl.Field().String()
 		return regex.MatchString(value)
 	})
+	if errFlag != nil {
+		return
+	}
 
 }
 

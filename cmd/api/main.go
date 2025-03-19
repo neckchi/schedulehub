@@ -60,9 +60,9 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// Wait for all active requests to complete
-	configServer.Shutdown(ctx)
-	scheduleServer.Shutdown(ctx)
-	voyageServer.Shutdown(ctx)
+	_ = configServer.Shutdown(ctx)
+	_ = scheduleServer.Shutdown(ctx)
+	_ = voyageServer.Shutdown(ctx)
 
 	log.Info("Server gracefully stopped")
 }

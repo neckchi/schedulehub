@@ -215,7 +215,7 @@ func (zs *ZimScheduleResponse) TokenHeaderParams(e *env.Manager) interfaces.Head
 		"client_secret": *e.ZimSecret,
 		"scope":         "Vessel Schedule",
 	}
-	headerParams := interfaces.HeaderParams{tokenHeaders, tokenParams}
+	headerParams := interfaces.HeaderParams{Headers: tokenHeaders, Params: tokenParams}
 	return headerParams
 }
 
@@ -233,6 +233,6 @@ func (zs *ZimScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) 
 		"toDate":                   parsedTime.AddDate(0, 0, *p.Query.SearchRange*7).Format("2006-01-02"),
 		"sortByDepartureOrArrival": string(*p.Query.StartDateType),
 	}
-	headerParams := interfaces.HeaderParams{scheduleHeaders, scheduleParams}
+	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 	return headerParams
 }

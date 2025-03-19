@@ -278,7 +278,7 @@ func (osp *OneScheduleResponse) TokenHeaderParams(e *env.Manager) interfaces.Hea
 	tokenParams := map[string]string{
 		"grant_type": "client_credentials",
 	}
-	headerParams := interfaces.HeaderParams{tokenHeaders, tokenParams}
+	headerParams := interfaces.HeaderParams{Headers: tokenHeaders, Params: tokenParams}
 	return headerParams
 }
 
@@ -300,7 +300,7 @@ func (osp *OneScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs)
 		scheduleParams["searchDateType"] = "BY_ARRIVAL_DATE"
 	}
 
-	headerParams := interfaces.HeaderParams{scheduleHeaders, scheduleParams}
+	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 
 	return headerParams
 }

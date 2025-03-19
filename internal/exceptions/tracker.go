@@ -79,7 +79,8 @@ func writeError(w http.ResponseWriter, errs []error, severity SeverityLevel, cod
 		}
 	}
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(ErrorResponse{Errors: errorsOccurred})
+	_ = json.NewEncoder(w).Encode(ErrorResponse{Errors: errorsOccurred})
+
 }
 
 var (
