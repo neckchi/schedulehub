@@ -295,7 +295,7 @@ func (csp *CmaScheduleResponse) GenerateVoyageService(voyageDetails *Voyage) *sc
 func (csp *CmaScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
 	var specificRoutings string
 
-	extraCondition := strings.HasPrefix(*p.Query.PointFrom, "US") && strings.HasPrefix(*p.Query.PointTo, "US")
+	extraCondition := strings.HasPrefix(p.Query.PointFrom, "US") && strings.HasPrefix(p.Query.PointTo, "US")
 	cmaCarrierCode := schema.InternalCodeMapping[p.Scac]
 	if cmaCarrierCode == schema.InternalCodeMapping[schema.APLU] && extraCondition {
 		specificRoutings = "USGovernment"
@@ -308,16 +308,16 @@ func (csp *CmaScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs)
 	}
 	scheduleParams := map[string]string{
 		"shippingCompany":  cmaCarrierCode,
-		"placeOfLoading":   *p.Query.PointFrom,
-		"placeOfDischarge": *p.Query.PointTo,
-		"searchRange":      strconv.Itoa((*p.Query.SearchRange) * 7),
+		"placeOfLoading":   p.Query.PointFrom,
+		"placeOfDischarge": p.Query.PointTo,
+		"searchRange":      strconv.Itoa((p.Query.SearchRange) * 7),
 		"specificRoutings": specificRoutings,
 	}
 
-	if *p.Query.StartDateType == schema.Departure {
-		scheduleParams["departureDate"] = *p.Query.StartDate
+	if p.Query.StartDateType == schema.Departure {
+		scheduleParams["departureDate"] = p.Query.StartDate
 	} else {
-		scheduleParams["arrivalDate"] = *p.Query.StartDate
+		scheduleParams["arrivalDate"] = p.Query.StartDate
 	}
 	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 	return headerParams

@@ -189,7 +189,7 @@ func (sss *ScheduleStreamingService) FanIn(channels ...<-chan any) <-chan any {
 // StreamResponse handles the streaming of response data
 func (sss *ScheduleStreamingService) StreamResponse(w flushWriter, fannedIn <-chan any) {
 	_, _ = w.Write([]byte(fmt.Sprintf(
-		`{"origin":"%s","destination":"%s","schedules":[`, *sss.queryParams.PointFrom, *sss.queryParams.PointTo,
+		`{"origin":"%s","destination":"%s","schedules":[`, sss.queryParams.PointFrom, sss.queryParams.PointTo,
 	)))
 	w.Flush() // Flush data right away
 

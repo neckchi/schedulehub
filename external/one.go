@@ -289,12 +289,12 @@ func (osp *OneScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs)
 		"Accept":        "application/json",
 	}
 	scheduleParams := map[string]string{
-		"originPort":      *p.Query.PointFrom,
-		"destinationPort": *p.Query.PointTo,
-		"searchDate":      *p.Query.StartDate,
-		"weeksOut":        strconv.Itoa(*p.Query.SearchRange),
+		"originPort":      p.Query.PointFrom,
+		"destinationPort": p.Query.PointTo,
+		"searchDate":      p.Query.StartDate,
+		"weeksOut":        strconv.Itoa(p.Query.SearchRange),
 	}
-	if *p.Query.StartDateType == schema.Departure {
+	if p.Query.StartDateType == schema.Departure {
 		scheduleParams["searchDateType"] = "BY_DEPARTURE_DATE"
 	} else {
 		scheduleParams["searchDateType"] = "BY_ARRIVAL_DATE"

@@ -287,13 +287,13 @@ func (msp *MscScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs)
 		"Authorization": fmt.Sprintf("Bearer %s", p.Token.Data["access_token"].(string)),
 	}
 	scheduleParams := map[string]string{
-		"fromPortUNCode": *p.Query.PointFrom,
-		"toPortUNCode":   *p.Query.PointTo,
-		"fromDate":       *p.Query.StartDate,
-		"toDate":         calculateEndDate(*p.Query.StartDate, *p.Query.SearchRange),
+		"fromPortUNCode": p.Query.PointFrom,
+		"toPortUNCode":   p.Query.PointTo,
+		"fromDate":       p.Query.StartDate,
+		"toDate":         calculateEndDate(p.Query.StartDate, p.Query.SearchRange),
 	}
 
-	if *p.Query.StartDateType == schema.Departure {
+	if p.Query.StartDateType == schema.Departure {
 		scheduleParams["datesRelated"] = "POL"
 	} else {
 		scheduleParams["datesRelated"] = "POD"

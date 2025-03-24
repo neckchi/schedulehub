@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -29,9 +30,9 @@ func VoyageHandler(or database.OracleRepository) http.Handler {
 		if len(sqlResults) > 1 {
 			dataProcessTime := time.Now()
 			duplicates := findDuplicates(sqlResults)
-			uniqueVoyageNumbers := getUniqueVoyageNumbers(sqlResults, queryParams.Voyage)
+			uniqueVoyageNumbers := getUniqueVoyageNumbers(sqlResults)
 			uniqueBounds, uniqueKeys := getUniqueBoundsAndKeys(sqlResults, &duplicates)
-			portOfCalls := constructPortCalls(sqlResults, &duplicates, uniqueBounds, uniqueKeys, uniqueVoyageNumbers, queryParams.Voyage)
+			portOfCalls := constructPortCalls(sqlResults, &duplicates, uniqueBounds, uniqueKeys, uniqueVoyageNumbers)
 			finalCalls := removeDuplicates(portOfCalls, duplicates)
 			addSequenceNumbers(finalCalls)
 			apiResult := constructAPIResult(queryParams, sqlResults, finalCalls, uniqueVoyageNumbers)
@@ -74,11 +75,12 @@ func findDuplicates(sqlResults []schema.ScheduleRow) map[groupKey]bool {
 	return duplicates
 }
 
-func getUniqueVoyageNumbers(sqlResults []schema.ScheduleRow, voyage *string) []string {
+func getUniqueVoyageNumbers(sqlResults []schema.ScheduleRow) []string {
 	uniqueVoyageNumbers := make([]string, 0, 2)
+	currentVoyage := sqlResults[0].VoyageNum
 	voyageSet := make(map[string]bool)
 	for _, result := range sqlResults {
-		if result.VoyageNum != *voyage && !voyageSet[result.VoyageNum] {
+		if result.VoyageNum != currentVoyage && !voyageSet[result.VoyageNum] {
 			uniqueVoyageNumbers = append(uniqueVoyageNumbers, result.VoyageNum)
 			voyageSet[result.VoyageNum] = true
 		}
@@ -107,8 +109,9 @@ func getUniqueBoundsAndKeys(sqlResults []schema.ScheduleRow, duplicates *map[gro
 	return uniqueBounds, uniqueKeys
 }
 
-func constructPortCalls(sqlResults []schema.ScheduleRow, duplicates *map[groupKey]bool, uniqueBounds, uniqueKeys, uniqueVoyageNumbers []string, voyage *string) []schema.PortCalls {
+func constructPortCalls(sqlResults []schema.ScheduleRow, duplicates *map[groupKey]bool, uniqueBounds, uniqueKeys, uniqueVoyageNumbers []string) []schema.PortCalls {
 	var portOfCalls []schema.PortCalls
+	currentVoyage := sqlResults[0].VoyageNum
 	for _, port := range sqlResults {
 		key := groupKey{port.PortEvent, port.PortCode, port.EventTime}
 		var boundValue any
@@ -118,9 +121,9 @@ func constructPortCalls(sqlResults []schema.ScheduleRow, duplicates *map[groupKe
 			boundValue = uniqueBounds
 			uniqueKeyVals = uniqueKeys
 			if len(uniqueVoyageNumbers) > 0 {
-				voyageValue = []string{*voyage, uniqueVoyageNumbers[0]}
+				voyageValue = []string{currentVoyage, uniqueVoyageNumbers[0]}
 			} else {
-				voyageValue = []string{*voyage}
+				voyageValue = []string{currentVoyage}
 			}
 		} else {
 			boundValue = port.VoyageDirection
@@ -170,8 +173,8 @@ func constructAPIResult(queryParams schema.QueryParamsForVesselVoyage, sqlResult
 		nextVoyage = uniqueVoyageNumbers[0]
 	}
 	return schema.MasterVoyage{
-		Scac:       string(*queryParams.SCAC),
-		Voyage:     *queryParams.Voyage,
+		Scac:       string(queryParams.SCAC),
+		Voyage:     cmp.Or(*queryParams.Voyage, sqlResults[0].VoyageNum),
 		NextVoyage: nextVoyage,
 		Vessel: schema.VesselDetails{
 			VesselName: sqlResults[0].VesselName,

@@ -83,11 +83,11 @@ func P2PQueryValidation(next http.Handler) http.Handler {
 		searchRange, _ := strconv.Atoi(query.Get("searchRange"))
 
 		requestParams := schema.QueryParams{
-			PointFrom:     &pointFrom,
-			PointTo:       &pointTo,
-			StartDateType: &startDateType,
-			StartDate:     &startDate,
-			SearchRange:   &searchRange,
+			PointFrom:     pointFrom,
+			PointTo:       pointTo,
+			StartDateType: startDateType,
+			StartDate:     startDate,
+			SearchRange:   searchRange,
 			SCAC:          &activeCarrierCodes,
 		}
 
@@ -127,16 +127,15 @@ func VVQueryValidation(next http.Handler) http.Handler {
 				return
 			}
 		}
-
 		scac := schema.CarrierCode(query.Get("scac"))
 		vesselIMO := query.Get("vesselIMO")
-		voyageNum := query.Get("voyageNum")
-
+		voyage := query.Get("voyageNum")
 		requestParams := schema.QueryParamsForVesselVoyage{
-			SCAC:      &scac,
+			SCAC:      scac,
 			VesselIMO: &vesselIMO,
-			Voyage:    &voyageNum,
+			Voyage:    &voyage,
 		}
+		requestParams.StartDate = pointerIf[string](query.Has("startDate"), query.Get("startDate"))
 
 		if err := schema.RequestValidate.Struct(requestParams); err != nil {
 			var errorField string

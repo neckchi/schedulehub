@@ -46,11 +46,11 @@ func init() {
 
 // Define the struct with field validations using Go tags
 type QueryParams struct {
-	PointFrom      *string        `json:"pointFrom" validate:"required,portCodeValidation" description:"Port Of Loading" `
-	PointTo        *string        `json:"pointTo" validate:"required,portCodeValidation" description:"Port Of Discharge" `
-	StartDateType  *StartDateType `json:"startDateType" validate:"required,oneof=Departure Arrival" description:"Search by either Departure or Arrival"`
-	StartDate      *string        `json:"startDate" validate:"required,isValidDate" description:"YYYY-MM-DD"`
-	SearchRange    *int           `json:"searchRange" validate:"required,oneof=1 2 3 4" description:"Search range based on start date and type, max 4 weeks"`
+	PointFrom      string         `json:"pointFrom" validate:"required,portCodeValidation" description:"Port Of Loading" `
+	PointTo        string         `json:"pointTo" validate:"required,portCodeValidation" description:"Port Of Discharge" `
+	StartDateType  StartDateType  `json:"startDateType" validate:"required,oneof=Departure Arrival" description:"Search by either Departure or Arrival"`
+	StartDate      string         `json:"startDate" validate:"required,isValidDate" description:"YYYY-MM-DD"`
+	SearchRange    int            `json:"searchRange" validate:"required,oneof=1 2 3 4" description:"Search range based on start date and type, max 4 weeks"`
 	SCAC           *[]CarrierCode `json:"scac" validate:"omitempty" example:"MSC,CMA"`
 	DirectOnly     *bool          `json:"directOnly" validate:"omitempty" description:"Direct means only show direct schedule else show both (direct/transshipment)"`
 	TSP            *string        `json:"transhipmentPort" validate:"omitempty,portCodeValidation" description:"Port Of Transshipment" example:"SGSIN"`
@@ -60,7 +60,8 @@ type QueryParams struct {
 }
 
 type QueryParamsForVesselVoyage struct {
-	SCAC      *CarrierCode `json:"scac" validate:"omitempty" example:"MSC,CMA"`
-	VesselIMO *string      `json:"vesselIMO" validate:"max=7" description:"vessel IMO lloyds code"`
-	Voyage    *string      `json:"voyageNum"  description:"Vessel Number"`
+	SCAC      CarrierCode `json:"scac" validate:"required" example:"MSC,CMA"`
+	VesselIMO *string     `json:"vesselIMO" validate:"max=7" description:"vessel IMO lloyds code"`
+	StartDate *string     `json:"startDate" validate:"omitempty,isValidDate" description:"YYYY-MM-DD"`
+	Voyage    *string     `json:"voyageNum"  validate:"omitempty" description:"Voyage Number"`
 }

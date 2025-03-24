@@ -220,18 +220,18 @@ func (zs *ZimScheduleResponse) TokenHeaderParams(e *env.Manager) interfaces.Head
 }
 
 func (zs *ZimScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
-	parsedTime, _ := time.Parse("2006-01-02", *p.Query.StartDate)
+	parsedTime, _ := time.Parse("2006-01-02", p.Query.StartDate)
 	scheduleHeaders := map[string]string{
 		"Ocp-Apim-Subscription-Key": *p.Env.ZimToken,
 		"Authorization":             fmt.Sprintf("Bearer %s", p.Token.Data["access_token"].(string)),
 		"Accept":                    "application/json",
 	}
 	scheduleParams := map[string]string{
-		"originCode":               *p.Query.PointFrom,
-		"destCode":                 *p.Query.PointTo,
-		"fromDate":                 *p.Query.StartDate,
-		"toDate":                   parsedTime.AddDate(0, 0, *p.Query.SearchRange*7).Format("2006-01-02"),
-		"sortByDepartureOrArrival": string(*p.Query.StartDateType),
+		"originCode":               p.Query.PointFrom,
+		"destCode":                 p.Query.PointTo,
+		"fromDate":                 p.Query.StartDate,
+		"toDate":                   parsedTime.AddDate(0, 0, p.Query.SearchRange*7).Format("2006-01-02"),
+		"sortByDepartureOrArrival": string(p.Query.StartDateType),
 	}
 	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 	return headerParams

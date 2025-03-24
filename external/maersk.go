@@ -247,16 +247,16 @@ func (maeusp *MaerskScheduleResponse) ScheduleHeaderParams(p *interfaces.Schedul
 	scheduleParams := map[string]string{
 		"collectionOriginCountryCode":       p.Origin[0]["countryCode"].(string),
 		"collectionOriginCityName":          p.Origin[0]["cityName"].(string),
-		"collectionOriginUNLocationCode":    *p.Query.PointFrom,
+		"collectionOriginUNLocationCode":    p.Query.PointFrom,
 		"deliveryDestinationCountryCode":    p.Destination[0]["countryCode"].(string),
 		"deliveryDestinationCityName":       p.Destination[0]["cityName"].(string),
-		"deliveryDestinationUNLocationCode": *p.Query.PointTo,
-		"dateRange":                         fmt.Sprintf("P%sW", strconv.Itoa(*p.Query.SearchRange)),
-		"startDate":                         *p.Query.StartDate,
+		"deliveryDestinationUNLocationCode": p.Query.PointTo,
+		"dateRange":                         fmt.Sprintf("P%sW", strconv.Itoa(p.Query.SearchRange)),
+		"startDate":                         p.Query.StartDate,
 		"vesselOperatorCarrierCode":         string(p.Scac),
 	}
 
-	if *p.Query.StartDateType == schema.Departure {
+	if p.Query.StartDateType == schema.Departure {
 		scheduleParams["startDateType"] = "D"
 	} else {
 		scheduleParams["startDateType"] = "A"

@@ -69,8 +69,8 @@ func (ss *ScheduleService) FetchSchedule(ctx context.Context, c *httpclient.Http
 		location, _ := ss.Location.(*LocationService)
 		return location != nil
 	}():
-		pol, _ := ss.Location.GetLocationDetails(ctx, c, e, *q.PointFrom)
-		pod, _ := ss.Location.GetLocationDetails(ctx, c, e, *q.PointTo)
+		pol, _ := ss.Location.GetLocationDetails(ctx, c, e, q.PointFrom)
+		pod, _ := ss.Location.GetLocationDetails(ctx, c, e, q.PointTo)
 		if pod == nil || pol == nil {
 			log.Info("Either POL or POD is unavailable ")
 			break

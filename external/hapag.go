@@ -225,12 +225,12 @@ func (hsp *HapagScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArg
 	const queryTimeFormat = "2006-01-02T15:04:05.000Z"
 
 	var calculateDateRange = func(q *schema.QueryParams) (startTime, endTime string, err error) {
-		date, err := time.Parse("2006-01-02", *q.StartDate)
+		date, err := time.Parse("2006-01-02", q.StartDate)
 		if err != nil {
 			return "", "", fmt.Errorf("failed to parse date: %w", err)
 		}
 		startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
-		endDate := startDate.AddDate(0, 0, *q.SearchRange*7)
+		endDate := startDate.AddDate(0, 0, q.SearchRange*7)
 		startTime = startDate.Format(queryTimeFormat)
 		endTime = endDate.Format(queryTimeFormat)
 		return startTime, endTime, nil
@@ -245,11 +245,11 @@ func (hsp *HapagScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArg
 	startDate, endDate, _ := calculateDateRange(p.Query)
 
 	scheduleParams := map[string]string{
-		"placeOfReceipt":  *p.Query.PointFrom,
-		"placeOfDelivery": *p.Query.PointTo,
+		"placeOfReceipt":  p.Query.PointFrom,
+		"placeOfDelivery": p.Query.PointTo,
 	}
 
-	if *p.Query.StartDateType == schema.Departure {
+	if p.Query.StartDateType == schema.Departure {
 		scheduleParams["departureDateTime:gte"] = startDate
 		scheduleParams["departureDateTime:lte"] = endDate
 	} else {

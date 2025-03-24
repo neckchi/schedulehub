@@ -385,12 +385,12 @@ func (isp *IqaxScheduleResponse) GenerateVoyageService(legResponse *IqaxLeg) *sc
 
 func (isp *IqaxScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
 	scheduleHeaders := map[string]string{"appKey": *p.Env.IqaxToken}
-	scheduleParams := map[string]string{"porID": *p.Query.PointFrom, "fndID": *p.Query.PointTo, "searchDuration": strconv.Itoa(*p.Query.SearchRange)}
+	scheduleParams := map[string]string{"porID": p.Query.PointFrom, "fndID": p.Query.PointTo, "searchDuration": strconv.Itoa(p.Query.SearchRange)}
 
-	if *p.Query.StartDateType == schema.Departure {
-		scheduleParams["departureFrom"] = *p.Query.StartDate
+	if p.Query.StartDateType == schema.Departure {
+		scheduleParams["departureFrom"] = p.Query.StartDate
 	} else {
-		scheduleParams["arrivalFrom"] = *p.Query.StartDate
+		scheduleParams["arrivalFrom"] = p.Query.StartDate
 	}
 	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 	return headerParams
