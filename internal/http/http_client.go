@@ -55,11 +55,12 @@ func (hc *HttpClientWrapper) methodRegister(ctx context.Context, method string, 
 // Function to safely write data to the byte buffer
 func writeToBuffer(mu *sync.Mutex, buf *bytes.Buffer, data []byte, addComma bool) {
 	mu.Lock()
+	defer mu.Unlock()
 	if addComma && buf.Len() > 1 { // Ensure comma is added only if needed
 		buf.WriteByte(',')
 	}
 	buf.Write(data)
-	mu.Unlock()
+	//mu.Unlock()
 }
 
 // Function to fetch partial content especially for CMA. All or nothing approach.
@@ -67,7 +68,11 @@ func (hc *HttpClientWrapper) fetchPartialContent(context context.Context, method
 	defer resp.Body.Close()
 	// Parse Content-Range header
 	contentRange := resp.Header.Get("content-range")
-	lastPageStr, err := strconv.Atoi(strings.Split(contentRange, "/")[1])
+	parts := strings.Split(contentRange, "/")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("invalid content-range format: %s", contentRange)
+	}
+	lastPageStr, err := strconv.Atoi(parts[1])
 	if err != nil {
 		return nil, fmt.Errorf("invalid content-range: %s", contentRange)
 	}
@@ -97,7 +102,7 @@ func (hc *HttpClientWrapper) fetchPartialContent(context context.Context, method
 			}
 			localHeaders["Range"] = fmt.Sprintf("%d-%d", num, num+49)
 			startExt := time.Now()
-			requestExt, err := hc.methodRegister(context, method, urlString, params, headers)
+			requestExt, err := hc.methodRegister(context, method, urlString, params, &localHeaders)
 			if err != nil {
 				log.Errorf("failed to create request for range %d-%d: %v", num, num+49, err)
 				return
@@ -116,9 +121,7 @@ func (hc *HttpClientWrapper) fetchPartialContent(context context.Context, method
 				return
 			}
 			bodyExt = bytes.Trim(bodyExt, "[]")
-
 			writeToBuffer(&mu, &combinedResponses, bodyExt, true)
-			//wg.Done()
 		}(num)
 	}
 	wg.Wait()
