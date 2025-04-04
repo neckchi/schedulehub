@@ -44,7 +44,7 @@
     │   ├── config.go                         # HTTP client configuration
     │   ├── http_client.go                    # HTTP client client implementation
     ├── middleware/                           # Middleware
-    │   ├── app_config.go                     # App configuration middleware
+    │   ├── app_config.go                     # App configuration middleware (Reload the config regularly(configureable)
     │   ├── correlationID.go                  # Correlation ID middleware
     │   ├── cors.go                           # CORS middleware
     │   ├── http_headers.go                   # HTTP headers middleware
@@ -74,6 +74,9 @@
     ├── go.sum                                # Go module configuration
     ├── MakeFile                              # Task Automation
     ├── README.md                             # Project documentation
+
+## BackGround
+
 
 ## P2P Schedule API hub
 /schedule/p2p  which aggregates the P2P Schedules APIs of the following Carriers:

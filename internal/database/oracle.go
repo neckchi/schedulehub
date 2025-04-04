@@ -129,6 +129,7 @@ func (p *OracleDBConnectionPool) getSQLquery() ([]byte, error) {
 // QueryContext executes a query that returns rows
 func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, queryParams schema.QueryParamsForVesselVoyage) ([]schema.ScheduleRow, error) {
 	log.Info("Started requesting vessel voyages from database")
+	startTime := time.Now()
 	rows, err := p.stmt.QueryContext(ctx, sql.Named("scac", string(queryParams.SCAC)),
 		sql.Named("imo", queryParams.VesselIMO), sql.Named("voyage", queryParams.Voyage),
 		sql.Named("startDate", queryParams.StartDate))
@@ -169,5 +170,6 @@ func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, queryParams s
 	sort.Slice(scheduleRows, func(i, j int) bool {
 		return scheduleRows[i].EventTime < scheduleRows[j].EventTime
 	})
+	log.Infof("Fetched vessel voyages from database %.3fs", time.Since(startTime).Seconds())
 	return scheduleRows, nil
 }

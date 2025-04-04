@@ -25,6 +25,6 @@ func VoyageRouter() http.Handler {
 	voyageRouter := http.NewServeMux()
 
 	vv := middlewareStackForvv(handlers.VoyageHandler(oracle))
-	voyageRouter.Handle("GET /schedules/vv", vv)
+	voyageRouter.Handle("GET /schedules/mastervoyage", vv)
 	return voyageRouter
 }

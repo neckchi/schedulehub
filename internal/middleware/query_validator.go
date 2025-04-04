@@ -127,14 +127,18 @@ func VVQueryValidation(next http.Handler) http.Handler {
 				return
 			}
 		}
+
 		scac := schema.CarrierCode(query.Get("scac"))
 		vesselIMO := query.Get("vesselIMO")
 		voyage := query.Get("voyageNum")
 		requestParams := schema.QueryParamsForVesselVoyage{
 			SCAC:      scac,
-			VesselIMO: &vesselIMO,
+			VesselIMO: vesselIMO,
 			Voyage:    &voyage,
 		}
+
+		requestParams.PointFrom = pointerIf[string](query.Has("pointFrom"), query.Get("pointFrom"))
+		requestParams.PointTo = pointerIf[string](query.Has("pointTo"), query.Get("pointTo"))
 		requestParams.StartDate = pointerIf[string](query.Has("startDate"), query.Get("startDate"))
 
 		if err := schema.RequestValidate.Struct(requestParams); err != nil {

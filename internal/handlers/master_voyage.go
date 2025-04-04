@@ -9,14 +9,12 @@ import (
 	"github.com/neckchi/schedulehub/internal/exceptions"
 	"github.com/neckchi/schedulehub/internal/middleware"
 	"github.com/neckchi/schedulehub/internal/schema"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 )
 
 func VoyageHandler(or database.OracleRepository) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
 		queryParams, _ := r.Context().Value(middleware.VVQueryParamsKey).(schema.QueryParamsForVesselVoyage)
 		ctx, cancel := context.WithTimeout(r.Context(), 7*time.Second)
 		defer cancel()
@@ -26,17 +24,14 @@ func VoyageHandler(or database.OracleRepository) http.Handler {
 			exceptions.InternalErrorHandler(w, errMsg)
 			return
 		}
-		log.Infof("Fetched vessel voyages from database %.3fs", time.Since(startTime).Seconds())
-		if len(sqlResults) > 1 {
-			dataProcessTime := time.Now()
-			duplicates := findDuplicates(sqlResults)
+		switch exist := len(sqlResults); exist > 1 {
+		case true:
+			overlappedPorts := findOverlappedPorts(sqlResults)
 			uniqueVoyageNumbers := getUniqueVoyageNumbers(sqlResults)
-			uniqueBounds, uniqueKeys := getUniqueBoundsAndKeys(sqlResults, &duplicates)
-			portOfCalls := constructPortCalls(sqlResults, &duplicates, uniqueBounds, uniqueKeys, uniqueVoyageNumbers)
-			finalCalls := removeDuplicates(portOfCalls, duplicates)
-			addSequenceNumbers(finalCalls)
+			uniqueBounds, uniqueKeys := getUniqueBoundsAndKeys(sqlResults, overlappedPorts)
+			portOfCalls := constructPortCalls(sqlResults, overlappedPorts, uniqueBounds, uniqueKeys, uniqueVoyageNumbers)
+			finalCalls := removeDuplicates(portOfCalls, overlappedPorts)
 			apiResult := constructAPIResult(queryParams, sqlResults, finalCalls, uniqueVoyageNumbers)
-			log.Infof("Finished processing master voyages  %.3fs", time.Since(dataProcessTime).Seconds())
 			jsonBytes, err := json.Marshal(apiResult)
 			if err != nil {
 				errMsg := fmt.Errorf("JSON marshaling failed: %v", err)
@@ -44,7 +39,7 @@ func VoyageHandler(or database.OracleRepository) http.Handler {
 			}
 			_, _ = w.Write(jsonBytes)
 
-		} else {
+		case false:
 			_, _ = w.Write([]byte(`{"message":"No available vessel voyage"}`))
 		}
 	})
@@ -56,7 +51,7 @@ type groupKey struct {
 	EventTime string
 }
 
-func findDuplicates(sqlResults []schema.ScheduleRow) map[groupKey]bool {
+func findOverlappedPorts(sqlResults []schema.ScheduleRow) map[groupKey]bool {
 	counts := make(map[groupKey]int, len(sqlResults))
 	for _, item := range sqlResults {
 		key := groupKey{
@@ -66,13 +61,13 @@ func findDuplicates(sqlResults []schema.ScheduleRow) map[groupKey]bool {
 		}
 		counts[key]++
 	}
-	duplicates := make(map[groupKey]bool, len(counts)/2)
+	overlappedPorts := make(map[groupKey]bool, len(counts)/2)
 	for key, count := range counts {
 		if count > 1 {
-			duplicates[key] = true
+			overlappedPorts[key] = true
 		}
 	}
-	return duplicates
+	return overlappedPorts
 }
 
 func getUniqueVoyageNumbers(sqlResults []schema.ScheduleRow) []string {
@@ -88,10 +83,10 @@ func getUniqueVoyageNumbers(sqlResults []schema.ScheduleRow) []string {
 	return uniqueVoyageNumbers
 }
 
-func getUniqueBoundsAndKeys(sqlResults []schema.ScheduleRow, duplicates *map[groupKey]bool) ([]string, []string) {
+func getUniqueBoundsAndKeys(sqlResults []schema.ScheduleRow, overlappedPorts map[groupKey]bool) ([]string, []string) {
 	uniqueBounds := make([]string, 0, 2)
 	uniqueKeys := make([]string, 0, 2)
-	if len(*duplicates) > 0 {
+	if len(overlappedPorts) > 0 {
 		boundsSet := make(map[string]bool)
 		voyageKeySet := make(map[string]bool)
 		for _, result := range sqlResults {
@@ -109,7 +104,7 @@ func getUniqueBoundsAndKeys(sqlResults []schema.ScheduleRow, duplicates *map[gro
 	return uniqueBounds, uniqueKeys
 }
 
-func constructPortCalls(sqlResults []schema.ScheduleRow, duplicates *map[groupKey]bool, uniqueBounds, uniqueKeys, uniqueVoyageNumbers []string) []schema.PortCalls {
+func constructPortCalls(sqlResults []schema.ScheduleRow, overlappedPorts map[groupKey]bool, uniqueBounds, uniqueKeys, uniqueVoyageNumbers []string) []schema.PortCalls {
 	var portOfCalls []schema.PortCalls
 	currentVoyage := sqlResults[0].VoyageNum
 	for _, port := range sqlResults {
@@ -117,7 +112,7 @@ func constructPortCalls(sqlResults []schema.ScheduleRow, duplicates *map[groupKe
 		var boundValue any
 		var uniqueKeyVals any
 		var voyageValue any
-		if (*duplicates)[key] {
+		if (overlappedPorts)[key] {
 			boundValue = uniqueBounds
 			uniqueKeyVals = uniqueKeys
 			if len(uniqueVoyageNumbers) > 0 {
@@ -143,9 +138,9 @@ func constructPortCalls(sqlResults []schema.ScheduleRow, duplicates *map[groupKe
 	return portOfCalls
 }
 
-func removeDuplicates(portOfCalls []schema.PortCalls, duplicates map[groupKey]bool) []schema.PortCalls {
+func removeDuplicates(portOfCalls []schema.PortCalls, overlappedPorts map[groupKey]bool) []schema.PortCalls {
 	var finalCalls []schema.PortCalls
-	if len(duplicates) > 0 {
+	if len(overlappedPorts) > 0 {
 		seen := make(map[string]bool)
 		for _, call := range portOfCalls {
 			callBytes, _ := json.Marshal(call)
@@ -158,13 +153,10 @@ func removeDuplicates(portOfCalls []schema.PortCalls, duplicates map[groupKey]bo
 	} else {
 		finalCalls = portOfCalls
 	}
-	return finalCalls
-}
-
-func addSequenceNumbers(finalCalls []schema.PortCalls) {
 	for i := range finalCalls {
 		finalCalls[i].Seq = i + 1
 	}
+	return finalCalls
 }
 
 func constructAPIResult(queryParams schema.QueryParamsForVesselVoyage, sqlResults []schema.ScheduleRow, finalCalls []schema.PortCalls, uniqueVoyageNumbers []string) schema.MasterVoyage {
