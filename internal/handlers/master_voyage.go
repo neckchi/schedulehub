@@ -27,8 +27,7 @@ func VoyageHandler(or database.OracleRepository) http.Handler {
 		switch exist := len(sqlResults); exist > 1 {
 		case true:
 			overlappedPorts := findOverlappedPorts(sqlResults)
-			uniqueVoyageNumbers := getUniqueVoyageNumbers(sqlResults)
-			uniqueBounds, uniqueKeys := getUniqueBoundsAndKeys(sqlResults, overlappedPorts)
+			uniqueVoyageNumbers, uniqueBounds, uniqueKeys := getUniqueData(sqlResults, overlappedPorts)
 			portOfCalls := constructPortCalls(sqlResults, overlappedPorts, uniqueBounds, uniqueKeys, uniqueVoyageNumbers)
 			finalCalls := removeDuplicates(portOfCalls, overlappedPorts)
 			apiResult := constructAPIResult(queryParams, sqlResults, finalCalls, uniqueVoyageNumbers)
@@ -70,26 +69,26 @@ func findOverlappedPorts(sqlResults []schema.ScheduleRow) map[groupKey]bool {
 	return overlappedPorts
 }
 
-func getUniqueVoyageNumbers(sqlResults []schema.ScheduleRow) []string {
+func getUniqueData(sqlResults []schema.ScheduleRow, overlappedPorts map[groupKey]bool) ([]string, []string, []string) {
 	uniqueVoyageNumbers := make([]string, 0, 2)
-	currentVoyage := sqlResults[0].VoyageNum
+	uniqueBounds := make([]string, 0, 2)
+	uniqueKeys := make([]string, 0, 2)
+
 	voyageSet := make(map[string]bool)
+	boundsSet := make(map[string]bool)
+	voyageKeySet := make(map[string]bool)
+
+	currentVoyage := sqlResults[0].VoyageNum
+
 	for _, result := range sqlResults {
+		// Collect unique voyage numbers
 		if result.VoyageNum != currentVoyage && !voyageSet[result.VoyageNum] {
 			uniqueVoyageNumbers = append(uniqueVoyageNumbers, result.VoyageNum)
 			voyageSet[result.VoyageNum] = true
 		}
-	}
-	return uniqueVoyageNumbers
-}
 
-func getUniqueBoundsAndKeys(sqlResults []schema.ScheduleRow, overlappedPorts map[groupKey]bool) ([]string, []string) {
-	uniqueBounds := make([]string, 0, 2)
-	uniqueKeys := make([]string, 0, 2)
-	if len(overlappedPorts) > 0 {
-		boundsSet := make(map[string]bool)
-		voyageKeySet := make(map[string]bool)
-		for _, result := range sqlResults {
+		// Collect unique bounds and keys if there are overlapping ports
+		if len(overlappedPorts) > 0 {
 			if !boundsSet[result.VoyageDirection] {
 				uniqueBounds = append(uniqueBounds, result.VoyageDirection)
 				boundsSet[result.VoyageDirection] = true
@@ -98,10 +97,10 @@ func getUniqueBoundsAndKeys(sqlResults []schema.ScheduleRow, overlappedPorts map
 				uniqueKeys = append(uniqueKeys, result.ProvideVoyageID)
 				voyageKeySet[result.ProvideVoyageID] = true
 			}
-
 		}
 	}
-	return uniqueBounds, uniqueKeys
+
+	return uniqueVoyageNumbers, uniqueBounds, uniqueKeys
 }
 
 func constructPortCalls(sqlResults []schema.ScheduleRow, overlappedPorts map[groupKey]bool, uniqueBounds, uniqueKeys, uniqueVoyageNumbers []string) []schema.PortCalls {
