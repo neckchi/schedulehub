@@ -9,6 +9,7 @@ import (
 	"github.com/neckchi/schedulehub/internal/exceptions"
 	"github.com/neckchi/schedulehub/internal/middleware"
 	"github.com/neckchi/schedulehub/internal/schema"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 )
@@ -19,6 +20,7 @@ func VoyageHandler(or database.OracleRepository) http.Handler {
 		ctx, cancel := context.WithTimeout(r.Context(), 7*time.Second)
 		defer cancel()
 		sqlResults, err := or.QueryContext(ctx, queryParams)
+		startTime := time.Now()
 		if err != nil {
 			errMsg := fmt.Errorf("Database query failed: %v", err)
 			exceptions.InternalErrorHandler(w, errMsg)
@@ -36,6 +38,7 @@ func VoyageHandler(or database.OracleRepository) http.Handler {
 				errMsg := fmt.Errorf("JSON marshaling failed: %v", err)
 				exceptions.InternalErrorHandler(w, errMsg)
 			}
+			log.Infof("Generated Master Vessel Schedule %.3fs", time.Since(startTime).Seconds())
 			_, _ = w.Write(jsonBytes)
 
 		case false:

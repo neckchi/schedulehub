@@ -29,34 +29,29 @@ type OracleSettings struct {
 // OracleDBConnectionPool implements the OracleRepository interface
 type OracleDBConnectionPool struct {
 	db          *sql.DB
-	stmt        *sql.Stmt
 	concurrency int
 	maxRetries  int
 }
 
 // NewOracleDBConnectionPool creates a new instance of OracleDBConnectionPool
 func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries int) (*OracleDBConnectionPool, error) {
-	//instead of fetching rows one by one, we fetch multiple rows in one network operation
-
 	if settings.DBUser == nil || settings.DBPassword == nil || settings.Host == nil ||
 		settings.Port == nil || settings.ServiceName == nil {
 		return nil, fmt.Errorf("all OracleSettings fields must be specified")
 	}
-
 	urlOptions := map[string]string{
 		"PREFETCH_ROWS": "500",
 	}
 	connStr := go_ora.BuildUrl(*settings.Host, *settings.Port, *settings.ServiceName, *settings.DBUser, *settings.DBPassword, urlOptions)
 	var db *sql.DB
 	var err error
-
 	// Retry mechanism for opening the database connection
 	for retry := 0; retry <= maxRetries; retry++ {
 		db, err = sql.Open("oracle", connStr)
 		if err == nil {
 			break
 		}
-		log.Errorf("attempt %d: error create database connection pool: %v", retry+1, err)
+		log.Errorf("attempt %d: error creating database connection pool: %v", retry+1, err)
 		if retry < maxRetries {
 			time.Sleep(time.Second * time.Duration(retry+1)) // Exponential backoff
 		}
@@ -64,41 +59,22 @@ func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries 
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection after %d retries: %w", maxRetries, err)
 	}
-
-	// Configure connection pool
 	db.SetMaxOpenConns(concurrency)
 	db.SetMaxIdleConns(100)
 	db.SetConnMaxIdleTime(20 * time.Minute)
 	db.SetConnMaxLifetime(30 * time.Minute)
-
 	pool := &OracleDBConnectionPool{
 		db:          db,
 		concurrency: concurrency,
 		maxRetries:  maxRetries,
 	}
 
-	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	for retry := 0; retry <= maxRetries; retry++ {
 		err = pool.db.PingContext(ctx)
 		if err == nil {
-			log.Info("Connected To Oracle DB connection pool")
-
-			// Read SQL query once and prepare it
-			queryString, err := pool.getSQLquery()
-			if err != nil {
-				db.Close()
-				return nil, fmt.Errorf("failed to get SQL script:%s", err)
-			}
-			//stmt will be bound to a single underlying connection forever. https://pkg.go.dev/database/sql#Stmt
-
-			stmt, err := db.PrepareContext(context.Background(), string(queryString))
-			if err != nil {
-				db.Close()
-				return nil, fmt.Errorf("failed to prepare context for SQL script:%s", err)
-			}
-			pool.stmt = stmt
+			log.Info("Connected to Oracle DB connection pool")
 			break
 		}
 		log.Errorf("attempt %d: failed to connect to Oracle DB: %v", retry+1, err)
@@ -126,16 +102,28 @@ func (p *OracleDBConnectionPool) getSQLquery() ([]byte, error) {
 	return queryString, nil
 }
 
-// QueryContext executes a query that returns rows
 func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, queryParams schema.QueryParamsForVesselVoyage) ([]schema.ScheduleRow, error) {
-	log.Info("Started requesting vessel voyages from database")
 	startTime := time.Now()
-	rows, err := p.stmt.QueryContext(ctx, sql.Named("scac", string(queryParams.SCAC)),
-		sql.Named("imo", queryParams.VesselIMO), sql.Named("voyage", queryParams.Voyage),
-		sql.Named("startDate", queryParams.StartDate))
+	log.Info("Started requesting vessel voyages from database")
 
+	queryString, err := p.getSQLquery()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get SQL script: %w", err)
+	}
+
+	// Directly execute the query without preparing a statement
+	rows, err := p.db.QueryContext(ctx, string(queryString),
+		sql.Named("scac", string(queryParams.SCAC)),
+		sql.Named("imo", queryParams.VesselIMO),
+		sql.Named("voyage", queryParams.Voyage),
+		sql.Named("startDate", queryParams.StartDate),
+	)
+	if err != nil {
+		if ctx.Err() != nil {
+			log.Errorf("QueryContext: query canceled due to context: %v", ctx.Err())
+			return nil, fmt.Errorf("query canceled: %w", ctx.Err())
+		}
+		return nil, fmt.Errorf("error executing query: %w", err)
 	}
 
 	defer func() {
@@ -143,6 +131,7 @@ func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, queryParams s
 			log.Errorf("error closing rows: %v", closeErr)
 		}
 	}()
+
 	var scheduleRows []schema.ScheduleRow
 	for rows.Next() {
 		var sr schema.ScheduleRow
@@ -166,10 +155,11 @@ func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, queryParams s
 		}
 		scheduleRows = append(scheduleRows, sr)
 	}
-	//sort desc
+
 	sort.Slice(scheduleRows, func(i, j int) bool {
 		return scheduleRows[i].EventTime < scheduleRows[j].EventTime
 	})
+
 	log.Infof("Fetched vessel voyages from database %.3fs", time.Since(startTime).Seconds())
 	return scheduleRows, nil
 }

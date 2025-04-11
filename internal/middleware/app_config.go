@@ -27,6 +27,7 @@ func GetAppConfig(next http.Handler) http.Handler {
 	var err error
 	// this will be called once. it wont spawn as many goroutine as the incoming request
 	// And the gorouinte will keep reading the config yaml every 5 mins.
+	//We can consider link all app secret and  config to AWS PS standard tier with the sync.once func
 	configOnce.Do(func() {
 		currentDir, err := os.Getwd()
 		if err != nil {
