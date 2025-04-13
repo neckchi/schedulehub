@@ -29,13 +29,6 @@ var allowParamsList = func(schemaStruct interface{}) map[string]bool {
 	return jsonTags
 }
 
-func pointerIf[T any](cond bool, val T) *T {
-	if cond {
-		return &val
-	}
-	return nil
-}
-
 func P2PQueryValidation(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
@@ -76,26 +69,20 @@ func P2PQueryValidation(next http.Handler) http.Handler {
 
 		}
 
-		pointFrom := query.Get("pointFrom")
-		pointTo := query.Get("pointTo")
-		startDateType := schema.StartDateType(query.Get("startDateType"))
-		startDate := query.Get("startDate")
 		searchRange, _ := strconv.Atoi(query.Get("searchRange"))
-
-		requestParams := schema.QueryParams{
-			PointFrom:     pointFrom,
-			PointTo:       pointTo,
-			StartDateType: startDateType,
-			StartDate:     startDate,
-			SearchRange:   searchRange,
-			SCAC:          &activeCarrierCodes,
-		}
-
 		directOnly, _ := strconv.ParseBool(query.Get("directOnly"))
-		requestParams.DirectOnly = pointerIf[bool](query.Has("directOnly"), directOnly)
-		requestParams.Service = pointerIf[string](query.Has("service"), query.Get("service"))
-		requestParams.TSP = pointerIf[string](query.Has("transhipmentPort"), query.Get("transhipmentPort"))
-		requestParams.VesselIMO = pointerIf[string](query.Has("vesselIMO"), query.Get("vesselIMO"))
+		requestParams := schema.QueryParams{
+			PointFrom:     query.Get("pointFrom"),
+			PointTo:       query.Get("pointTo"),
+			StartDateType: schema.StartDateType(query.Get("startDateType")),
+			StartDate:     query.Get("startDate"),
+			SearchRange:   searchRange,
+			SCAC:          activeCarrierCodes,
+			DirectOnly:    directOnly,
+			TSP:           query.Get("transhipmentPort"),
+			VesselIMO:     query.Get("vesselIMO"),
+			Service:       query.Get("service"),
+		}
 
 		if err := schema.RequestValidate.Struct(requestParams); err != nil {
 			var errorField string
@@ -128,18 +115,14 @@ func VVQueryValidation(next http.Handler) http.Handler {
 			}
 		}
 
-		scac := schema.CarrierCode(query.Get("scac"))
-		vesselIMO := query.Get("vesselIMO")
-		voyage := query.Get("voyageNum")
+		dateRange, _ := strconv.Atoi(query.Get("dateRange"))
 		requestParams := schema.QueryParamsForVesselVoyage{
-			SCAC:      scac,
-			VesselIMO: vesselIMO,
-			Voyage:    &voyage,
+			SCAC:      schema.CarrierCode(query.Get("scac")),
+			VesselIMO: query.Get("vesselIMO"),
+			Voyage:    query.Get("voyageNum"),
+			StartDate: query.Get("startDate"),
+			DateRange: dateRange,
 		}
-
-		requestParams.PointFrom = pointerIf[string](query.Has("pointFrom"), query.Get("pointFrom"))
-		requestParams.PointTo = pointerIf[string](query.Has("pointTo"), query.Get("pointTo"))
-		requestParams.StartDate = pointerIf[string](query.Has("startDate"), query.Get("startDate"))
 
 		if err := schema.RequestValidate.Struct(requestParams); err != nil {
 			var errorField string

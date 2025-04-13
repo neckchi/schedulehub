@@ -17,7 +17,7 @@ import (
 func VoyageHandler(or database.OracleRepository) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		queryParams, _ := r.Context().Value(middleware.VVQueryParamsKey).(schema.QueryParamsForVesselVoyage)
-		ctx, cancel := context.WithTimeout(r.Context(), 7*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second) //Do not inherits cancellation from r.Context(). Otherwise once the client is closed on purpose, the database will be terminiated
 		defer cancel()
 		sqlResults, err := or.QueryContext(ctx, queryParams)
 		startTime := time.Now()
@@ -168,7 +168,7 @@ func constructAPIResult(queryParams schema.QueryParamsForVesselVoyage, sqlResult
 	}
 	return schema.MasterVoyage{
 		Scac:       string(queryParams.SCAC),
-		Voyage:     cmp.Or(*queryParams.Voyage, sqlResults[0].VoyageNum),
+		Voyage:     cmp.Or(queryParams.Voyage, sqlResults[0].VoyageNum),
 		NextVoyage: nextVoyage,
 		Vessel: schema.VesselDetails{
 			VesselName: sqlResults[0].VesselName,

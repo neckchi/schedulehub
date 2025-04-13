@@ -9,8 +9,8 @@ type ScheduleFilterOption func(*schema.Schedule, *schema.QueryParams) bool
 
 func WithDirectOnly() ScheduleFilterOption {
 	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
-		if query.DirectOnly != nil {
-			return !schedule.Transshipment == *query.DirectOnly
+		if query.DirectOnly {
+			return !schedule.Transshipment == query.DirectOnly
 		}
 		return true
 	}
@@ -18,10 +18,10 @@ func WithDirectOnly() ScheduleFilterOption {
 
 func WithTSP() ScheduleFilterOption {
 	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
-		if query.TSP != nil {
+		if query.TSP != "" {
 			return slices.ContainsFunc(schedule.Legs[1:], func(leg *schema.Leg) bool {
-				return leg.PointFrom.LocationCode == *query.TSP ||
-					leg.PointTo.LocationCode == *query.TSP
+				return leg.PointFrom.LocationCode == query.TSP ||
+					leg.PointTo.LocationCode == query.TSP
 			})
 		}
 		return true
@@ -30,9 +30,9 @@ func WithTSP() ScheduleFilterOption {
 
 func WithVesselIMO() ScheduleFilterOption {
 	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
-		if query.VesselIMO != nil {
+		if query.VesselIMO != "" {
 			return slices.ContainsFunc(schedule.Legs, func(leg *schema.Leg) bool {
-				return leg.Transportations.Reference == *query.VesselIMO
+				return leg.Transportations.Reference == query.VesselIMO
 			})
 		}
 		return true
@@ -41,10 +41,10 @@ func WithVesselIMO() ScheduleFilterOption {
 
 func WithService() ScheduleFilterOption {
 	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
-		if query.Service != nil {
+		if query.Service != "" {
 			return slices.ContainsFunc(schedule.Legs, func(leg *schema.Leg) bool {
 				return leg.Services.ServiceCode != nil &&
-					*leg.Services.ServiceCode == *query.Service
+					*leg.Services.ServiceCode == query.Service
 			})
 		}
 		return true

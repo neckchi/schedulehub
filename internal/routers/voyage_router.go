@@ -17,7 +17,7 @@ func VoyageRouter() http.Handler {
 		Port:        envManager.Port,
 		ServiceName: envManager.ServiceName,
 	}
-	oracle, err := database.NewOracleDBConnectionPool(oracleSetting, 20, 3)
+	oracle, err := database.NewOracleDBConnectionPool(oracleSetting, 100, 3)
 	if err != nil {
 		panic(err)
 	}

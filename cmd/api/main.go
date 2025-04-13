@@ -25,7 +25,7 @@ func main() {
 	}
 	voyageRouter := routers.VoyageRouter()
 	voyageServer := &http.Server{
-		Addr:    ":8003",
+		Addr:    ":8001",
 		Handler: voyageRouter,
 	}
 
@@ -44,7 +44,7 @@ func main() {
 	}()
 	go func() {
 		voyageServer.SetKeepAlivesEnabled(true)
-		log.Info("Starting HTTP Server on port 8003 for master vessel voyage")
+		log.Info("Starting HTTP Server on port 8001 for master vessel voyage")
 		if err := voyageServer.ListenAndServe(); err != http.ErrServerClosed {
 			log.Error("Server Error: ", err)
 		}

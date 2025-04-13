@@ -45,11 +45,11 @@ func NewScheduleStreamingService(
 }
 
 func (sss *ScheduleStreamingService) GenerateScheduleChannels() []<-chan any {
-	fanOutChannels := make([]<-chan any, 0, len(*sss.queryParams.SCAC))
+	fanOutChannels := make([]<-chan any, 0, len(sss.queryParams.SCAC))
 	compositeFilter := ScheduleFilters(WithDirectOnly(), WithTSP(), WithVesselIMO(), WithService())
-	for _, scac := range *sss.queryParams.SCAC {
+	for _, scac := range sss.queryParams.SCAC {
 		p2pScheduleChan := sss.ConsolidateSchedule(scac)
-		if sss.queryParams.TSP != nil || sss.queryParams.VesselIMO != nil || sss.queryParams.Service != nil || sss.queryParams.DirectOnly != nil {
+		if sss.queryParams.TSP != "" || sss.queryParams.VesselIMO != "" || sss.queryParams.Service != "" || sss.queryParams.DirectOnly {
 			filterSchedule := sss.FilterSchedule(p2pScheduleChan, compositeFilter)
 			fanOutChannels = append(fanOutChannels, sss.ValidateSchedules(filterSchedule))
 		} else {

@@ -1,88 +1,73 @@
-WITH CapStartTimeFromFirstVV AS ( -- all CTE operations are dependent on each other. We need to get startTime of vessel -> obtain vessel voyage -> obtain subsequent vessel votyage
-    SELECT
+WITH CapStartTimeFromFirstVV AS ( -- Each CTE operation depenedent on one another. get first vv -> get next vv based on first vv -> combine first + next vv
+    SELECT /*+ MATERIALIZE */
         VV.ID AS VV_ID
     FROM VESSEL_VOYAGE VV
              JOIN M_SEAFREIGHT_CARRIER SC ON VV.CARRIER_ID = SC.ID
              JOIN M_VESSEL V ON VV.VESSEL_ID = V.ID
              JOIN VESSEL_VOYAGE_PORT_STOP VVPT ON VV.ID = VVPT.VOYAGE_ID
-    WHERE
-      -- If voyage is provided, use it; otherwise, use startDate
-        (VV.CARRIER_VOYAGE_KEY = :voyage OR :voyage IS NULL)
+    WHERE (:voyage IS NULL OR VV.CARRIER_VOYAGE_KEY = :voyage)
       AND VV.IS_ACTIVE = 1
       AND V.IS_ACTIVE = 1
-      AND SUBSTR(VV.DATA_SOURCE, 1, 3) NOT IN ('P44','OCE') -- We only need direct carrier vessel voyage
+      AND SUBSTR(VV.DATA_SOURCE, 1, 3) NOT IN ('P44', 'OCE') -- Exclude non-direct carrier vessel voyages
       AND SC.CODE = :scac
       AND V.LLOYDS_CODE = :imo
-      AND (
-        VVPT.TIME BETWEEN
-            TO_DATE(:startDate, 'YYYY-MM-DD') - 20
-            AND TO_DATE(:startDate, 'YYYY-MM-DD') + 20
-            OR :startDate IS NULL
-        )
+      AND (:startDate IS NULL OR VVPT.TIME BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') - :dateRange
+      AND TO_DATE(:startDate, 'YYYY-MM-DD') + :dateRange)
     ORDER BY VV.UPDATE_TIME DESC, VV.START_TIME ASC
         FETCH FIRST 1 ROWS ONLY
 ),
-     SpecificVoyageService AS (
-         SELECT
-             VV.CARRIER_VOYAGE_KEY AS CURRENT_VOYAGE_KEY,
-             VV.CARRIER_SERVICE_CODE AS SPECIFIC_SERVICE_CODE,
-             VV.END_TIME AS MAIN_END_TIME
+     FirstVoyage AS (
+         SELECT /*+ MATERIALIZE */
+             VV.CARRIER_SERVICE_CODE AS MAIN_SERVICE_CODE,
+             VV.END_TIME AS MAIN_END_TIME,
+             CEIL((CAST(VV.END_TIME AS DATE) - CAST(VV.START_TIME AS DATE))) AS MAIN_TT
          FROM VESSEL_VOYAGE VV
-                  JOIN M_SEAFREIGHT_CARRIER SC ON VV.CARRIER_ID = SC.ID
-                  JOIN M_VESSEL V ON VV.VESSEL_ID = V.ID
-         WHERE
-             VV.ID = (SELECT VV_ID FROM CapStartTimeFromFirstVV)
+         WHERE VV.ID = (SELECT VV_ID FROM CapStartTimeFromFirstVV)
      ),
      NextVoyage AS (
-         SELECT
+         SELECT /*+ MATERIALIZE */
              VV.ID AS VV_SUB_ID,
              VV.CARRIER_VOYAGE_KEY AS FIRST_SUB_VOYAGE_KEY
          FROM VESSEL_VOYAGE VV
                   JOIN M_SEAFREIGHT_CARRIER SC ON VV.CARRIER_ID = SC.ID
                   JOIN M_VESSEL V ON VV.VESSEL_ID = V.ID
+                  CROSS JOIN FirstVoyage FV -- Use CROSS JOIN to avoid repeated subqueries
          WHERE SC.CODE = :scac
            AND V.LLOYDS_CODE = :imo
-           AND VV.CARRIER_SERVICE_CODE = (SELECT SPECIFIC_SERVICE_CODE FROM SpecificVoyageService)
-           AND VV.END_TIME > (SELECT MAIN_END_TIME FROM SpecificVoyageService)
-           AND VV.CARRIER_VOYAGE_KEY != (SELECT CURRENT_VOYAGE_KEY FROM SpecificVoyageService)
+           AND VV.CARRIER_SERVICE_CODE = FV.MAIN_SERVICE_CODE
+           AND VV.START_TIME BETWEEN CAST(FV.MAIN_END_TIME AS DATE) - FV.MAIN_TT AND CAST(FV.MAIN_END_TIME AS DATE) + FV.MAIN_TT
+           AND VV.END_TIME > FV.MAIN_END_TIME
+           AND VV.ID != (SELECT VV_ID FROM CapStartTimeFromFirstVV)
     AND VV.IS_ACTIVE = 1
     AND V.IS_ACTIVE = 1
-    AND SUBSTR(VV.DATA_SOURCE, 1, 3) NOT IN ('P44','OCE') --We only need direct carrier vessel voyage
-ORDER BY VV.END_TIME ASC, VV.CARRIER_VOYAGE_KEY ASC
+    AND SUBSTR(VV.DATA_SOURCE, 1, 3) NOT IN ('P44', 'OCE') -- Exclude non-direct carrier vessel voyages
+ORDER BY VV.UPDATE_TIME DESC, VV.END_TIME ASC, VV.CARRIER_VOYAGE_KEY ASC
     FETCH FIRST 1 ROWS ONLY
     ),
-    VesselVoyage AS (
-SELECT
-    VV.DATA_SOURCE AS DATA_SOURCE,
-    SC.CODE AS scac,
-    VV.PROVIDER_VOYAGE_ID AS PROVIDER_VOYAGE_ID,
-    VN.NAME AS VESSEL_NAME,
-    V.LLOYDS_CODE AS VESSEL_IMO,
-    VV.CARRIER_VOYAGE_KEY AS VOYAGE_NUM,
-    VV.VOYAGE_DIRECTION AS VOYAGE_DIRECTION,
-    VV.CARRIER_SERVICE_CODE AS SERVICE_CODE,
-    GA.CODE AS PORT_CODE,
-    GA.UN_INTERNATIONAL_NAME AS PORT_NAME,
-    VVPT.EVENT AS PORT_EVENT,
-    VVPT.TIME AS EVENT_TIME,
-    ROW_NUMBER() OVER (PARTITION BY VV.CARRIER_VOYAGE_KEY, VVPT.EVENT, GA.CODE
-    ORDER BY VV.PROVIDER_VOYAGE_ID, VV.UPDATE_TIME DESC) AS rnk
-FROM VESSEL_VOYAGE VV
-    JOIN VESSEL_VOYAGE_PORT_STOP VVPT ON VV.ID = VVPT.VOYAGE_ID
-    JOIN M_SEAFREIGHT_CARRIER SC ON VV.CARRIER_ID = SC.ID
-    JOIN M_GEOGRAPHICAL_AREA GA ON VVPT.PORT_ID = GA.ID
-    JOIN M_VESSEL V ON VV.VESSEL_ID = V.ID
-    JOIN M_VESSEL_NAME VN ON V.ID = VN.VESSEL_ID
-WHERE VV.ID IN (
-    (SELECT VV_ID FROM CapStartTimeFromFirstVV),
-    (SELECT VV_SUB_ID FROM NextVoyage)
-    )
-  AND VV.IS_ACTIVE = 1
-  AND V.IS_ACTIVE = 1
-  AND VN.IS_ACTIVE = 1
-  AND SUBSTR(VV.DATA_SOURCE, 1, 3) NOT IN ('P44','OCE') --We only need direct carrier vessel voyage
-  AND SC.CODE = :scac
-  AND V.LLOYDS_CODE = :imo
-    )
-SELECT * FROM VesselVoyage
-WHERE rnk = 1 OR (PORT_EVENT = 'PAS' AND rnk < 3)-- remove duplicates by using rnk if any
+    CombinedVesselVoyage AS (
+        SELECT
+            VV.DATA_SOURCE,
+            SC.CODE AS scac,
+            VV.PROVIDER_VOYAGE_ID,
+            VN.NAME AS VESSEL_NAME,
+            V.LLOYDS_CODE AS VESSEL_IMO,
+            VV.CARRIER_VOYAGE_KEY AS VOYAGE_NUM,
+            VV.VOYAGE_DIRECTION,
+            VV.CARRIER_SERVICE_CODE AS SERVICE_CODE,
+            GA.CODE AS PORT_CODE,
+            GA.UN_INTERNATIONAL_NAME AS PORT_NAME,
+            VVPT.EVENT AS PORT_EVENT,
+            VVPT.TIME AS EVENT_TIME
+        FROM VESSEL_VOYAGE VV
+            JOIN VESSEL_VOYAGE_PORT_STOP VVPT ON VV.ID = VVPT.VOYAGE_ID
+            JOIN M_SEAFREIGHT_CARRIER SC ON VV.CARRIER_ID = SC.ID
+            JOIN M_GEOGRAPHICAL_AREA GA ON VVPT.PORT_ID = GA.ID
+            JOIN M_VESSEL V ON VV.VESSEL_ID = V.ID
+            JOIN M_VESSEL_NAME VN ON V.ID = VN.VESSEL_ID
+        WHERE VV.ID IN (
+            (SELECT VV_ID FROM CapStartTimeFromFirstVV),
+            (SELECT VV_SUB_ID FROM NextVoyage)
+            )
+            )
+        SELECT *
+        FROM CombinedVesselVoyage
