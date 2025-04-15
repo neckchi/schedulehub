@@ -1,49 +1,68 @@
 package handlers
 
 import (
-	"cmp"
-	"context"
 	"encoding/json"
-	"fmt"
+	//"fmt"
 	"github.com/neckchi/schedulehub/internal/database"
-	"github.com/neckchi/schedulehub/internal/exceptions"
+	//"github.com/neckchi/schedulehub/internal/exceptions"
 	"github.com/neckchi/schedulehub/internal/middleware"
 	"github.com/neckchi/schedulehub/internal/schema"
-	log "github.com/sirupsen/logrus"
 	"net/http"
-	"time"
 )
+
+//func VoyageHandler(or database.OracleRepository) http.Handler {
+//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//		queryParams, _ := r.Context().Value(middleware.VVQueryParamsKey).(schema.QueryParamsForVesselVoyage)
+//		ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second) //Do not inherits cancellation from r.Context(). Otherwise once the client is closed on purpose, the database will be terminiated
+//		defer cancel()
+//		sqlResults, err := or.QueryContext(ctx, queryParams)
+//		startTime := time.Now()
+//		if err != nil {
+//			errMsg := fmt.Errorf("Database query failed: %v", err)
+//			exceptions.InternalErrorHandler(w, errMsg)
+//			return
+//		}
+//		switch exist := len(sqlResults); exist > 1 {
+//		case true:
+//			overlappedPorts := findOverlappedPorts(sqlResults)
+//			uniqueVoyageNumbers, uniqueBounds, uniqueKeys := getUniqueData(sqlResults, overlappedPorts)
+//			portOfCalls := constructPortCalls(sqlResults, overlappedPorts, uniqueBounds, uniqueKeys, uniqueVoyageNumbers)
+//			finalCalls := removeDuplicates(portOfCalls, overlappedPorts)
+//			apiResult := constructAPIResult(sqlResults, finalCalls, uniqueVoyageNumbers)
+//			jsonBytes, err := json.Marshal(apiResult)
+//			if err != nil {
+//				errMsg := fmt.Errorf("JSON marshaling failed: %v", err)
+//				exceptions.InternalErrorHandler(w, errMsg)
+//			}
+//			log.Infof("Generated Master Vessel Schedule %.3fs", time.Since(startTime).Seconds())
+//			_, _ = w.Write(jsonBytes)
+//
+//		case false:
+//			_, _ = w.Write([]byte(`{"message":"No available vessel voyage"}`))
+//		}
+//	})
+//}
+
+type flushWriter struct {
+	http.ResponseWriter
+}
+
+func (fw flushWriter) Flush() {
+	if flusher, ok := fw.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
 
 func VoyageHandler(or database.OracleRepository) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fw := flushWriter{w}
 		queryParams, _ := r.Context().Value(middleware.VVQueryParamsKey).(schema.QueryParamsForVesselVoyage)
-		ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second) //Do not inherits cancellation from r.Context(). Otherwise once the client is closed on purpose, the database will be terminiated
-		defer cancel()
-		sqlResults, err := or.QueryContext(ctx, queryParams)
-		startTime := time.Now()
-		if err != nil {
-			errMsg := fmt.Errorf("Database query failed: %v", err)
-			exceptions.InternalErrorHandler(w, errMsg)
-			return
-		}
-		switch exist := len(sqlResults); exist > 1 {
-		case true:
-			overlappedPorts := findOverlappedPorts(sqlResults)
-			uniqueVoyageNumbers, uniqueBounds, uniqueKeys := getUniqueData(sqlResults, overlappedPorts)
-			portOfCalls := constructPortCalls(sqlResults, overlappedPorts, uniqueBounds, uniqueKeys, uniqueVoyageNumbers)
-			finalCalls := removeDuplicates(portOfCalls, overlappedPorts)
-			apiResult := constructAPIResult(queryParams, sqlResults, finalCalls, uniqueVoyageNumbers)
-			jsonBytes, err := json.Marshal(apiResult)
-			if err != nil {
-				errMsg := fmt.Errorf("JSON marshaling failed: %v", err)
-				exceptions.InternalErrorHandler(w, errMsg)
-			}
-			log.Infof("Generated Master Vessel Schedule %.3fs", time.Since(startTime).Seconds())
-			_, _ = w.Write(jsonBytes)
-
-		case false:
-			_, _ = w.Write([]byte(`{"message":"No available vessel voyage"}`))
-		}
+		done := make(chan int) // this is going to ensure that our goroutine are shut down in the event that we call done from the P2PScheduleHandler function
+		defer close(done)
+		mvsService := NewMastervVesselVoyageService(or, done, queryParams)
+		fanoutMVSChannels := mvsService.FanOutMVSChannels()
+		fannedInStream := mvsService.FanInMasterVesselSchedule(fanoutMVSChannels...)
+		mvsService.StreamMasterVesselSchedule(fw, fannedInStream)
 	})
 }
 
@@ -161,14 +180,14 @@ func removeDuplicates(portOfCalls []schema.PortCalls, overlappedPorts map[groupK
 	return finalCalls
 }
 
-func constructAPIResult(queryParams schema.QueryParamsForVesselVoyage, sqlResults []schema.ScheduleRow, finalCalls []schema.PortCalls, uniqueVoyageNumbers []string) schema.MasterVoyage {
+func constructAPIResult(sqlResults []schema.ScheduleRow, finalCalls []schema.PortCalls, uniqueVoyageNumbers []string) *schema.MasterVoyage {
 	var nextVoyage string
 	if len(uniqueVoyageNumbers) > 0 {
 		nextVoyage = uniqueVoyageNumbers[0]
 	}
-	return schema.MasterVoyage{
-		Scac:       string(queryParams.SCAC),
-		Voyage:     cmp.Or(queryParams.Voyage, sqlResults[0].VoyageNum),
+	return &schema.MasterVoyage{
+		Scac:       sqlResults[0].SCAC,
+		Voyage:     sqlResults[0].VoyageNum,
 		NextVoyage: nextVoyage,
 		Vessel: schema.VesselDetails{
 			VesselName: sqlResults[0].VesselName,

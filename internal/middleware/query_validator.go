@@ -116,8 +116,13 @@ func VVQueryValidation(next http.Handler) http.Handler {
 		}
 
 		dateRange, _ := strconv.Atoi(query.Get("dateRange"))
+		scacStrings := query["scac"] // []string
+		scacCarrierCodes := make([]schema.CarrierCode, len(scacStrings))
+		for i, scac := range scacStrings {
+			scacCarrierCodes[i] = schema.CarrierCode(scac)
+		}
 		requestParams := schema.QueryParamsForVesselVoyage{
-			SCAC:      schema.CarrierCode(query.Get("scac")),
+			SCAC:      scacCarrierCodes,
 			VesselIMO: query.Get("vesselIMO"),
 			Voyage:    query.Get("voyageNum"),
 			StartDate: query.Get("startDate"),

@@ -44,7 +44,7 @@ func NewScheduleStreamingService(
 	}
 }
 
-func (sss *ScheduleStreamingService) GenerateScheduleChannels() []<-chan any {
+func (sss *ScheduleStreamingService) FanOutScheduleChannels() []<-chan any {
 	fanOutChannels := make([]<-chan any, 0, len(sss.queryParams.SCAC))
 	compositeFilter := ScheduleFilters(WithDirectOnly(), WithTSP(), WithVesselIMO(), WithService())
 	for _, scac := range sss.queryParams.SCAC {
@@ -58,21 +58,6 @@ func (sss *ScheduleStreamingService) GenerateScheduleChannels() []<-chan any {
 	}
 	return fanOutChannels
 
-}
-
-// FetchCarrierSchedule fetches schedule for a specific carrier
-func (sss *ScheduleStreamingService) FetchCarrierSchedule(scac schema.CarrierCode) []*schema.Schedule {
-	if sss.ctx.Err() != nil {
-		log.Infof("Context canceled before fetching schedule for %s", scac)
-		return nil
-	}
-	service, err := sss.p2p.CreateScheduleService(scac)
-	if err != nil {
-		log.Errorf("Failed to create schedule service: %s", err)
-		return nil
-	}
-	schedules, _ := service.FetchSchedule(sss.ctx, sss.client, sss.env, sss.queryParams, scac)
-	return schedules
 }
 
 // ConsolidateSchedule creates a channel for schedule consolidation
@@ -90,6 +75,21 @@ func (sss *ScheduleStreamingService) ConsolidateSchedule(scac schema.CarrierCode
 		}
 	}()
 	return stream
+}
+
+// FetchCarrierSchedule fetches schedule for a specific carrier
+func (sss *ScheduleStreamingService) FetchCarrierSchedule(scac schema.CarrierCode) []*schema.Schedule {
+	if sss.ctx.Err() != nil {
+		log.Infof("Context canceled before fetching schedule for %s", scac)
+		return nil
+	}
+	service, err := sss.p2p.CreateScheduleService(scac)
+	if err != nil {
+		log.Errorf("Failed to create schedule service: %s", err)
+		return nil
+	}
+	schedules, _ := service.FetchSchedule(sss.ctx, sss.client, sss.env, sss.queryParams, scac)
+	return schedules
 }
 
 func (sss *ScheduleStreamingService) PostFilter(schedules []*schema.Schedule, filter ScheduleFilterOption) iter.Seq[*schema.Schedule] {
@@ -143,7 +143,7 @@ func (sss *ScheduleStreamingService) ValidateSchedules(stream <-chan []*schema.S
 // validSchedulesFn validates individual schedules
 func (sss *ScheduleStreamingService) validSchedulesFn(schedules []*schema.Schedule) bool {
 	for _, schedule := range schedules {
-		if err := schema.ResponseValidate.Struct(schedule); err != nil {
+		if err := schema.P2PResponseValidate.Struct(schedule); err != nil {
 			if validationErrors, ok := err.(validator.ValidationErrors); ok {
 				log.Errorf("%+v\n", validationErrors.Error())
 				return false

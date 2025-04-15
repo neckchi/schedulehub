@@ -1,5 +1,26 @@
 package schema
 
+import (
+	"github.com/go-playground/validator/v10"
+	"regexp"
+)
+
+var MVSResponseValidate *validator.Validate
+
+func init() {
+	MVSResponseValidate = validator.New(validator.WithRequiredStructEnabled())
+
+	errIMO := MVSResponseValidate.RegisterValidation("imoValidation", func(fl validator.FieldLevel) bool {
+		regex := regexp.MustCompile(`^[0-9]{7}$`)
+		value := fl.Field().String()
+		return regex.MatchString(value)
+	})
+	if errIMO != nil {
+		return
+	}
+
+}
+
 var EventType = map[string]string{
 	"UNL": "Unloading",
 	"LOA": "Loading",
@@ -23,7 +44,7 @@ type PortCalls struct {
 
 type VesselDetails struct {
 	VesselName string `json:"vesselName" validate:"required"`
-	Imo        string `json:"imo" validate:"required"`
+	Imo        string `json:"imo" validate:"required,imoValidation"`
 }
 
 type Services struct {

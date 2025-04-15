@@ -15,7 +15,7 @@ import (
 )
 
 type OracleRepository interface {
-	QueryContext(ctx context.Context, queryParams schema.QueryParamsForVesselVoyage) ([]schema.ScheduleRow, error)
+	QueryContext(ctx context.Context, scac schema.CarrierCode, queryParams schema.QueryParamsForVesselVoyage) ([]schema.ScheduleRow, error)
 	Close() error
 }
 
@@ -53,7 +53,7 @@ func getSQLquery() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlFilePath := filepath.Join(currentDir+"/internal/handlers", "master_voyage.sql")
+	sqlFilePath := filepath.Join(currentDir+"/internal/handlers/master_vessel_schedule", "master_voyage.sql")
 	return os.ReadFile(sqlFilePath)
 }
 
@@ -72,9 +72,9 @@ func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries 
 	}
 
 	db.SetMaxOpenConns(concurrency)
-	db.SetMaxIdleConns(100)
-	db.SetConnMaxIdleTime(60 * time.Second)
-	db.SetConnMaxLifetime(60 * time.Second)
+	db.SetMaxIdleConns(concurrency)
+	db.SetConnMaxIdleTime(10 * time.Minute)
+	db.SetConnMaxLifetime(10 * time.Minute)
 
 	pool := &OracleDBConnectionPool{
 		db:          db,
@@ -117,12 +117,11 @@ func (p *OracleDBConnectionPool) Close() error {
 	return dbErr
 }
 
-func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, queryParams schema.QueryParamsForVesselVoyage) ([]schema.ScheduleRow, error) {
+func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, scac schema.CarrierCode, queryParams schema.QueryParamsForVesselVoyage) ([]schema.ScheduleRow, error) {
 	startTime := time.Now()
-	log.Info("Started requesting vessel voyages from database")
-
+	log.Infof("Started requesting %s vessel voyages from database", scac)
 	rows, err := p.stmt.QueryContext(ctx,
-		sql.Named("scac", string(queryParams.SCAC)),
+		sql.Named("scac", string(scac)),
 		sql.Named("imo", queryParams.VesselIMO),
 		sql.Named("voyage", queryParams.Voyage),
 		sql.Named("startDate", queryParams.StartDate),
@@ -157,7 +156,6 @@ func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, queryParams s
 			&sr.PortName,
 			&sr.PortEvent,
 			&sr.EventTime,
-			//&sr.Rank,
 		)
 		if err != nil {
 			log.Errorf("row scan error: %v", err)
@@ -165,13 +163,17 @@ func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, queryParams s
 		scheduleRows = append(scheduleRows, sr)
 	}
 
+	if exist := len(scheduleRows); exist < 1 {
+		return nil, fmt.Errorf("No Master Vessel Scheudle For scac:%s,vesselIMO:%s", scac, queryParams.VesselIMO)
+	}
 	slices.SortFunc(scheduleRows, func(a, b schema.ScheduleRow) int {
 		return cmp.Or(
-			cmp.Compare(a.VoyageNum, b.VoyageNum),
 			cmp.Compare(a.EventTime, b.EventTime),
+			cmp.Compare(a.VoyageNum, b.VoyageNum),
 			cmp.Compare(a.PortCode, b.PortCode),
 		)
 	})
-	log.Infof("Fetched vessel voyages from database %.3fs", time.Since(startTime).Seconds())
+	log.Infof("Fetched %s vessel voyages from database %.3fs", scac, time.Since(startTime).Seconds())
 	return scheduleRows, nil
+
 }

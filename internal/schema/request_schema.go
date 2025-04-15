@@ -59,9 +59,9 @@ type QueryParams struct {
 }
 
 type QueryParamsForVesselVoyage struct {
-	SCAC      CarrierCode `json:"scac" validate:"required" example:"MSC,CMA"`
-	VesselIMO string      `json:"vesselIMO" validate:"required,max=7" description:"vessel IMO lloyds code"`
-	StartDate string      `json:"startDate" validate:"omitempty,isValidDate" description:"YYYY-MM-DD"`
-	DateRange int         `json:"dateRange" validate:"required_with=StartDate,gte=0" description:"Date Tolerance"`
-	Voyage    string      `json:"voyageNum"  validate:"omitempty" description:"Voyage Number"`
+	SCAC      []CarrierCode `json:"scac" validate:"required" example:"MSC,CMA"`
+	VesselIMO string        `json:"vesselIMO" validate:"required,max=7" description:"vessel IMO lloyds code"`
+	StartDate string        `json:"startDate" validate:"omitempty,isValidDate" description:"YYYY-MM-DD"`
+	DateRange int           `json:"dateRange" validate:"required_with=StartDate,gte=0" description:"Date Tolerance"`
+	Voyage    string        `json:"voyageNum"  validate:"omitempty" description:"Voyage Number"`
 }

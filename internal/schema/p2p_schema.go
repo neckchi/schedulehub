@@ -6,13 +6,13 @@ import (
 	"time"
 )
 
-var ResponseValidate *validator.Validate
+var P2PResponseValidate *validator.Validate
 
 func init() {
-	ResponseValidate = validator.New(validator.WithRequiredStructEnabled())
+	P2PResponseValidate = validator.New(validator.WithRequiredStructEnabled())
 
 	// Function to validate if a string is in ISO8601 format
-	errDate := ResponseValidate.RegisterValidation("isValidDate", func(fl validator.FieldLevel) bool {
+	errDate := P2PResponseValidate.RegisterValidation("isValidDate", func(fl validator.FieldLevel) bool {
 		const layout1 = "2006-01-02T15:04:05"
 		value := fl.Field().String()
 		_, err := time.Parse(layout1, value)
@@ -22,7 +22,7 @@ func init() {
 		return
 	}
 
-	errPort := ResponseValidate.RegisterValidation("portCodeValidation", func(fl validator.FieldLevel) bool {
+	errPort := P2PResponseValidate.RegisterValidation("portCodeValidation", func(fl validator.FieldLevel) bool {
 		regex := regexp.MustCompile(`^[A-Z]{2}[A-Z0-9]{3}$`)
 		value := fl.Field().String()
 		return regex.MatchString(value)
@@ -31,9 +31,9 @@ func init() {
 		return
 	}
 
-	ResponseValidate.RegisterStructValidation(TransportationValidation, Transportation{})
-	ResponseValidate.RegisterStructValidation(LegEventDateValidation, Leg{})
-	ResponseValidate.RegisterStructValidation(ScheduleEventDateValidation, Schedule{})
+	P2PResponseValidate.RegisterStructValidation(TransportationValidation, Transportation{})
+	P2PResponseValidate.RegisterStructValidation(LegEventDateValidation, Leg{})
+	P2PResponseValidate.RegisterStructValidation(ScheduleEventDateValidation, Schedule{})
 
 }
 
@@ -168,11 +168,9 @@ func ScheduleEventDateValidation(sl validator.StructLevel) {
 
 // Product struct equivalent in Go
 type Product struct {
-	//ProductID   string `json:"productid" validate:"required"`
-	Origin      string `json:"origin" validate:"required,portCodeValidation"`
-	Destination string `json:"destination" validate:"required,portCodeValidation"`
-	//NoOfSchedule int         `json:"noofSchedule" validate:"gte=0"`
-	Schedules []*Schedule `json:"schedules" validate:"dive"`
+	Origin      string      `json:"origin" validate:"required,portCodeValidation"`
+	Destination string      `json:"destination" validate:"required,portCodeValidation"`
+	Schedules   []*Schedule `json:"schedules" validate:"dive"`
 }
 
 // HealthCheck struct equivalent in Go

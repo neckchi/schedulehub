@@ -52,8 +52,8 @@ func P2PScheduleHandler(client *httpclient.HttpClient, env *env.Manager,
 		done := make(chan int) // this is going to ensure that our goroutine are shut down in the event that we call done from the P2PScheduleHandler function
 		defer close(done)
 		service := NewScheduleStreamingService(ctx, done, client, env, p2p, &queryParams)
-		scheduleChannels := service.GenerateScheduleChannels()
-		fannedInStream := service.FanIn(scheduleChannels...)
+		fanOutscheduleChannels := service.FanOutScheduleChannels()
+		fannedInStream := service.FanIn(fanOutscheduleChannels...)
 		service.StreamResponse(fw, fannedInStream)
 		go func() {
 			err := rr.Set(r.URL.String())

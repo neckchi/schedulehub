@@ -1,5 +1,5 @@
 WITH CapStartTimeFromFirstVV AS ( -- Each CTE operation depenedent on one another. get first vv -> get next vv based on first vv -> combine first + next vv
-    SELECT /*+ MATERIALIZE */
+    SELECT /*+ PARALLEL(VV, 8) PARALLEL(SC, 8) PARALLEL(V, 8) PARALLEL(VVPT, 8) */
         VV.ID AS VV_ID
     FROM VESSEL_VOYAGE VV
              JOIN M_SEAFREIGHT_CARRIER SC ON VV.CARRIER_ID = SC.ID
@@ -17,7 +17,7 @@ WITH CapStartTimeFromFirstVV AS ( -- Each CTE operation depenedent on one anothe
         FETCH FIRST 1 ROWS ONLY
 ),
      FirstVoyage AS (
-         SELECT /*+ MATERIALIZE */
+         SELECT /*+ PARALLEL(VV, 8) */
              VV.CARRIER_SERVICE_CODE AS MAIN_SERVICE_CODE,
              VV.END_TIME AS MAIN_END_TIME,
              CEIL((CAST(VV.END_TIME AS DATE) - CAST(VV.START_TIME AS DATE))) AS MAIN_TT
@@ -25,7 +25,7 @@ WITH CapStartTimeFromFirstVV AS ( -- Each CTE operation depenedent on one anothe
          WHERE VV.ID = (SELECT VV_ID FROM CapStartTimeFromFirstVV)
      ),
      NextVoyage AS (
-         SELECT /*+ MATERIALIZE */
+         SELECT /*+ PARALLEL(VV, 8) PARALLEL(SC, 8) PARALLEL(V, 8) */
              VV.ID AS VV_SUB_ID,
              VV.CARRIER_VOYAGE_KEY AS FIRST_SUB_VOYAGE_KEY
          FROM VESSEL_VOYAGE VV
@@ -45,7 +45,7 @@ ORDER BY VV.UPDATE_TIME DESC, VV.END_TIME ASC, VV.CARRIER_VOYAGE_KEY ASC
     FETCH FIRST 1 ROWS ONLY
     ),
     CombinedVesselVoyage AS (
-        SELECT
+        SELECT /*+ PARALLEL(VV, 8) PARALLEL(VVPT, 8) PARALLEL(SC, 8) PARALLEL(GA, 8) PARALLEL(V, 8) PARALLEL(VN, 8) */
             VV.DATA_SOURCE,
             SC.CODE AS scac,
             VV.PROVIDER_VOYAGE_ID,
