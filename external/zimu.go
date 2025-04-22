@@ -191,7 +191,7 @@ func (zs *ZimScheduleResponse) GenerateVoyageService(legDetails *zleg) *schema.L
 	var service *schema.Service
 	if voyageNumber != "" {
 		service = &schema.Service{
-			ServiceCode: &legLine,
+			ServiceCode: legLine,
 		}
 	}
 

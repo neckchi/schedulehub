@@ -182,9 +182,9 @@ type IqaxLeg struct {
 	} `json:"toPoint"`
 	TransportMode string `json:"transportMode"`
 	Service       struct {
-		ServiceID int     `json:"serviceID"`
-		Code      *string `json:"code"`
-		Name      *string `json:"name"`
+		ServiceID int    `json:"serviceID"`
+		Code      string `json:"code"`
+		Name      string `json:"name"`
 	} `json:"service"`
 	Vessel struct {
 		VesselGID string `json:"vesselGID"`
@@ -370,9 +370,8 @@ func (isp *IqaxScheduleResponse) GenerateVoyageService(legResponse *IqaxLeg) *sc
 		ExternalVoyage: externalVoyage,
 	}
 	var service *schema.Service
-	serviceCode := legResponse.Service.Code
-	if serviceCode != nil {
-		service = &schema.Service{ServiceCode: serviceCode, ServiceName: legResponse.Service.Name}
+	if legResponse.Service.Code != "" {
+		service = &schema.Service{ServiceCode: legResponse.Service.Code, ServiceName: legResponse.Service.Name}
 	}
 
 	voyageServices := &schema.Leg{

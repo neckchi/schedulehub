@@ -256,8 +256,8 @@ func (osp *OneScheduleResponse) GenerateVoyageService(schedule *OneRoute, legDet
 	var service *schema.Service
 	if sc != "" {
 		service = &schema.Service{
-			ServiceCode: &sc,
-			ServiceName: &sn,
+			ServiceCode: sc,
+			ServiceName: sn,
 		}
 	}
 	voyageServices := &schema.Leg{

@@ -216,8 +216,8 @@ func (maeusp *MaerskScheduleResponse) GenerateVoyageService(legDetails *Transpor
 	var service *schema.Service
 	if sc != "" {
 		service = &schema.Service{
-			ServiceCode: &sc,
-			ServiceName: &sc,
+			ServiceCode: sc,
+			ServiceName: sc,
 		}
 	}
 	voyageServices := &schema.Leg{

@@ -43,8 +43,7 @@ func WithService() ScheduleFilterOption {
 	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
 		if query.Service != "" {
 			return slices.ContainsFunc(schedule.Legs, func(leg *schema.Leg) bool {
-				return leg.Services.ServiceCode != nil &&
-					*leg.Services.ServiceCode == query.Service
+				return leg.Services != nil && leg.Services.ServiceCode == query.Service
 			})
 		}
 		return true

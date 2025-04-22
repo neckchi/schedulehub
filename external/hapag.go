@@ -29,8 +29,8 @@ type hleg struct {
 	VesselOperatorSMDGLinerCode    string   `json:"vesselOperatorSMDGLinerCode"`
 	VesselIMONumber                string   `json:"vesselIMONumber"`
 	VesselName                     string   `json:"vesselName"`
-	CarrierServiceName             *string  `json:"carrierServiceName"`
-	CarrierServiceCode             *string  `json:"carrierServiceCode"`
+	CarrierServiceName             string   `json:"carrierServiceName"`
+	CarrierServiceCode             string   `json:"carrierServiceCode"`
 	UniversalImportVoyageReference *string  `json:"universalImportVoyageReference"`
 	UniversalExportVoyageReference string   `json:"universalExportVoyageReference"`
 	CarrierImportVoyageNumber      *string  `json:"carrierImportVoyageNumber"`
@@ -208,7 +208,7 @@ func (hsp *HapagScheduleResponse) GenerateVoyageService(legDetails *hleg) *schem
 
 	var service *schema.Service
 	serviceCode := legDetails.CarrierServiceCode
-	if serviceCode != nil {
+	if serviceCode != "" {
 		service = &schema.Service{ServiceCode: serviceCode, ServiceName: legDetails.CarrierServiceName}
 	}
 

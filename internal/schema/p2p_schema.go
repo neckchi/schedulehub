@@ -114,8 +114,8 @@ type Voyage struct {
 }
 
 type Service struct {
-	ServiceCode *string `json:"serviceCode,omitempty" validate:"omitempty"`
-	ServiceName *string `json:"serviceName,omitempty" validate:"omitempty"`
+	ServiceCode string `json:"serviceCode,omitempty" validate:"omitempty"`
+	ServiceName string `json:"serviceName,omitempty" validate:"omitempty"`
 }
 
 type Leg struct {

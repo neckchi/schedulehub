@@ -88,8 +88,8 @@ type Voyage struct {
 }
 
 type Service struct {
-	Code         *string `json:"code"`
-	InternalCode *string `json:"internalCode"`
+	Code         string `json:"code"`
+	InternalCode string `json:"internalCode"`
 }
 
 var getLocationCode = func(cmaSchedule *CmaSchedule, portType string) string {
@@ -280,7 +280,7 @@ func (csp *CmaScheduleResponse) GenerateVoyageService(voyageDetails *Voyage) *sc
 	}
 
 	var service *schema.Service
-	if serviceCode != nil {
+	if serviceCode != "" {
 		service = &schema.Service{ServiceCode: serviceCode}
 	}
 

@@ -53,7 +53,7 @@ type MscCarrier struct {
 }
 
 type MscService struct {
-	Description *string `json:"Description"`
+	Description string `json:"Description"`
 }
 
 type MscCall struct {
