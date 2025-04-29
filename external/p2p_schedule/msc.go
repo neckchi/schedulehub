@@ -1,4 +1,4 @@
-package external
+package p2p_schedule
 
 import (
 	"crypto/x509"

@@ -1,8 +1,8 @@
-package handlers
+package p2p_schedule
 
 import (
 	"context"
-	"github.com/neckchi/schedulehub/external"
+	"github.com/neckchi/schedulehub/external/p2p_schedule"
 	"github.com/neckchi/schedulehub/internal/database"
 	"github.com/neckchi/schedulehub/internal/exceptions"
 	httpclient "github.com/neckchi/schedulehub/internal/http"
@@ -43,7 +43,7 @@ func (fw flushWriter) Flush() {
 }
 
 func P2PScheduleHandler(client *httpclient.HttpClient, env *env.Manager,
-	p2p *external.ScheduleServiceFactory, rr database.RedisRepository) http.Handler {
+	p2p *p2p_schedule.ScheduleServiceFactory, rr database.RedisRepository) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fw := flushWriter{w}
 		ctx, cancel := context.WithCancel(r.Context())

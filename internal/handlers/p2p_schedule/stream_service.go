@@ -1,11 +1,11 @@
-package handlers
+package p2p_schedule
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/neckchi/schedulehub/external"
+	"github.com/neckchi/schedulehub/external/p2p_schedule"
 	httpclient "github.com/neckchi/schedulehub/internal/http"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
@@ -21,7 +21,7 @@ type ScheduleStreamingService struct {
 	done        <-chan int
 	client      *httpclient.HttpClient
 	env         *env.Manager
-	p2p         *external.ScheduleServiceFactory
+	p2p         *p2p_schedule.ScheduleServiceFactory
 	queryParams *schema.QueryParams
 }
 
@@ -31,7 +31,7 @@ func NewScheduleStreamingService(
 	done <-chan int,
 	client *httpclient.HttpClient,
 	env *env.Manager,
-	p2p *external.ScheduleServiceFactory,
+	p2p *p2p_schedule.ScheduleServiceFactory,
 	queryParams *schema.QueryParams,
 ) *ScheduleStreamingService {
 	return &ScheduleStreamingService{

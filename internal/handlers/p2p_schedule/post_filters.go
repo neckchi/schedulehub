@@ -1,4 +1,4 @@
-package handlers
+package p2p_schedule
 
 import (
 	"github.com/neckchi/schedulehub/internal/schema"

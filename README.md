@@ -18,15 +18,16 @@
     │   ├── location_interface.go             # location interface
     │   ├── schedule_interface.go             # schedule configuration
     │   ├── token_interface.go                # token configuration
-    │─── carriers_factory.go                  # Factory for carrier interfaces
-    │─── cma.go                               # CMA carrier logic
-    │─── hapag.go                             # Hapag-Lloyd carrier bizlogic
-    │─── helper.go                            # Helper functions
-    │─── iqax.go                              # OOLU COSCO carrier biz logic
-    │─── maersk.go                            # Maersk carrier biz logic
-    │─── msc.go                               # MSC carrier biz logic
-    │─── one.go                               # ONE carrier biz logic
-    │─── zimu.go                              # ZIM carrier biz logic
+    ├── p2p_schedule/                         # external carrier p2p schedule mapping
+    │   │─── carriers_factory.go              # Factory for carrier interfaces
+    │   │─── cma.go                           # CMA carrier logic
+    │   │─── hapag.go                         # Hapag-Lloyd carrier bizlogic
+    │   │─── helper.go                        # Helper functions
+    │   │─── iqax.go                          # OOLU COSCO carrier biz logic
+    │   │─── maersk.go                        # Maersk carrier biz logic
+    │   │─── msc.go                           # MSC carrier biz logic
+    │   │─── one.go                           # ONE carrier biz logic
+    │   │─── zimu.go                          # ZIM carrier biz logic
     ├── internal/                             # Internal logic (not accessible externally)
     ├── database/                             # Database management
     │   ├── oracle.go                         # Oracle database logic
@@ -34,13 +35,15 @@
     ├── exceptions/                           # Exception handling
     │   ├── tracker.go                        # Tracker exception handling
     ├── handlers/                             # Request handlers
+    ├── master_vessel_schedule/               # master vessel schedule handler
     │   ├── master_voyage.go                  # Master voyage handler
     │   ├── master_voyage.sql                 # SQL for master voyage
     │   ├── mvs_steam.go                      # Master Voyage Stream service(Part Of voyage handler)
+    ├── p2p_schedule/                         # p2p schedule handler
     │   ├── filter_map.go                     # Filter and map logic
-    │   ├── health_check.go                   # Health check handler
     │   ├── p2p_schedules.go                  # P2P schedules handler
     │   ├── stream_service.go                 # P2P Stream service(Part Of P2P schedules handler)
+    ├── health_check.go                       # Health check handler
     ├── http/                                 # HTTP client logic
     │   ├── config.go                         # HTTP client configuration
     │   ├── http_client.go                    # HTTP client client implementation

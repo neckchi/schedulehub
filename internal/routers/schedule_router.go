@@ -1,9 +1,10 @@
 package routers
 
 import (
-	"github.com/neckchi/schedulehub/external"
+	"github.com/neckchi/schedulehub/external/p2p_schedule"
 	"github.com/neckchi/schedulehub/internal/database"
 	"github.com/neckchi/schedulehub/internal/handlers"
+	p2p_schedule2 "github.com/neckchi/schedulehub/internal/handlers/p2p_schedule"
 	"github.com/neckchi/schedulehub/internal/http"
 	"github.com/neckchi/schedulehub/internal/middleware"
 	"github.com/neckchi/schedulehub/internal/secret"
@@ -16,7 +17,7 @@ func ScheduleRouter() http.Handler {
 	if err != nil {
 		panic(err)
 	}
-	externalApiConfig := external.NewScheduleServiceFactory(envManager)
+	externalApiConfig := p2p_schedule.NewScheduleServiceFactory(envManager)
 	redisSettings := database.RedisSettings{
 		DB:         envManager.RedisDb,
 		DBUser:     envManager.RedisUser,
@@ -41,7 +42,7 @@ func ScheduleRouter() http.Handler {
 	//HealthCheck
 	hc := middlewareStackForhc(handlers.HealthCheckHandler())
 	//P2P schedule
-	sh := middlewareStackForp2p(handlers.P2PScheduleHandler(httpClient, envManager, externalApiConfig, redis))
+	sh := middlewareStackForp2p(p2p_schedule2.P2PScheduleHandler(httpClient, envManager, externalApiConfig, redis))
 	router.Handle("GET /schedules/p2p", sh)
 	router.Handle("GET /health", hc)
 	return router
