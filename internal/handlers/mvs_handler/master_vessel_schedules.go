@@ -34,7 +34,7 @@ func NewVoyageService(
 
 func VoyageHandler(s *VoyageService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fw := utils.FlushWriter{w}
+		fw := utils.NewFlushWriter(w)
 		queryParams, _ := r.Context().Value(middleware.VVQueryParamsKey).(schema.QueryParamsForVesselVoyage)
 		scacConfig, ok := r.Context().Value(middleware.ScheduleConfig).(map[string]interface{})["externalAPICarriers"].(map[string]interface{})
 		if !ok {
