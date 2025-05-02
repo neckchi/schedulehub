@@ -81,6 +81,7 @@ func NewOracleDBConnectionPool(settings OracleSettings, concurrency, maxRetries 
 		concurrency: concurrency,
 		maxRetries:  maxRetries,
 	}
+	log.Infof("Connected to Oracle database connection pool")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
