@@ -14,16 +14,6 @@ import (
 	"net/http"
 )
 
-type flushWriter struct {
-	http.ResponseWriter
-}
-
-func (fw flushWriter) Flush() {
-	if flusher, ok := fw.ResponseWriter.(http.Flusher); ok {
-		flusher.Flush()
-	}
-}
-
 type VoyageService struct {
 	client *httpclient.HttpClient
 	env    *env.Manager

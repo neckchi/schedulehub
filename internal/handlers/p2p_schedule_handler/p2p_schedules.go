@@ -33,16 +33,6 @@ func PrintMemStats() {
 ///If HeapInuse grows but Alloc stabilizes, memory is being freed but not yet returned to the OS (normal behavior in Go).
 ///If Sys approaches your EC2 instance’s RAM limit (e.g., 1 GiB for t2.micro), you’re at risk of running out of memory.
 
-//type flushWriter struct {
-//	http.ResponseWriter
-//}
-//
-//func (fw flushWriter) Flush() {
-//	if flusher, ok := fw.ResponseWriter.(http.Flusher); ok {
-//		flusher.Flush()
-//	}
-//}
-
 type P2PScheduleService struct {
 	client *httpclient.HttpClient
 	env    *env.Manager
