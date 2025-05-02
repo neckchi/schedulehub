@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"cmp"
@@ -68,17 +68,17 @@ type address struct {
 
 const hapagDateFormat string = "2006-01-02T15:04:05-07:00"
 
-func (hsp *HapagScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.Schedule, error) {
+func (hsp *HapagScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.P2PSchedule, error) {
 	var hapagScheduleData HapagScheduleResponse
 	err := json.Unmarshal(responseJson, &hapagScheduleData)
 	if err != nil {
 		return nil, err
 	}
-	var hapagScheduleList = make([]*schema.Schedule, 0, len(hapagScheduleData))
+	var hapagScheduleList = make([]*schema.P2PSchedule, 0, len(hapagScheduleData))
 	for _, route := range hapagScheduleData {
 		etd := ConvertDateFormat(&route.PlaceOfReceipt.DateTime, hapagDateFormat)
 		eta := ConvertDateFormat(&route.PlaceOfDelivery.DateTime, hapagDateFormat)
-		scheduleResult := &schema.Schedule{
+		scheduleResult := &schema.P2PSchedule{
 			Scac:          "HLCU",
 			PointFrom:     route.PlaceOfReceipt.Location.UNLocationCode,
 			PointTo:       route.PlaceOfDelivery.Location.UNLocationCode,
@@ -121,13 +121,13 @@ func (hsp *HapagScheduleResponse) GenerateLegPoints(legDetails *hleg) *schema.Le
 	pointFrom := schema.PointBase{
 		LocationName: legDetails.Departure.Location.LocationName,
 		LocationCode: legDetails.Departure.Location.UNLocationCode,
-		TerminalCode: legDetails.Departure.FacilityTypeCode,
+		TerminalCode: legDetails.Departure.Location.FacilitySMDGCode,
 	}
 
 	pointTo := schema.PointBase{
 		LocationName: legDetails.Arrival.Location.LocationName,
 		LocationCode: legDetails.Arrival.Location.UNLocationCode,
-		TerminalCode: legDetails.Arrival.FacilityTypeCode,
+		TerminalCode: legDetails.Arrival.Location.FacilitySMDGCode,
 	}
 
 	portPairs := &schema.Leg{
@@ -220,7 +220,7 @@ func (hsp *HapagScheduleResponse) GenerateVoyageService(legDetails *hleg) *schem
 	return voyageServices
 }
 
-func (hsp *HapagScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
+func (hsp *HapagScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParams]) interfaces.HeaderParams {
 
 	const queryTimeFormat = "2006-01-02T15:04:05.000Z"
 

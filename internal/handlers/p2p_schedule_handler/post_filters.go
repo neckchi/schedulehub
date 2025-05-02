@@ -1,14 +1,14 @@
-package p2p_schedule
+package p2p_schedule_handler
 
 import (
 	"github.com/neckchi/schedulehub/internal/schema"
 	"slices"
 )
 
-type ScheduleFilterOption func(*schema.Schedule, *schema.QueryParams) bool
+type ScheduleFilterOption func(*schema.P2PSchedule, *schema.QueryParams) bool
 
 func WithDirectOnly() ScheduleFilterOption {
-	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+	return func(schedule *schema.P2PSchedule, query *schema.QueryParams) bool {
 		if query.DirectOnly {
 			return !schedule.Transshipment == query.DirectOnly
 		}
@@ -17,7 +17,7 @@ func WithDirectOnly() ScheduleFilterOption {
 }
 
 func WithTSP() ScheduleFilterOption {
-	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+	return func(schedule *schema.P2PSchedule, query *schema.QueryParams) bool {
 		if query.TSP != "" {
 			return slices.ContainsFunc(schedule.Legs[1:], func(leg *schema.Leg) bool {
 				return leg.PointFrom.LocationCode == query.TSP ||
@@ -29,7 +29,7 @@ func WithTSP() ScheduleFilterOption {
 }
 
 func WithVesselIMO() ScheduleFilterOption {
-	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+	return func(schedule *schema.P2PSchedule, query *schema.QueryParams) bool {
 		if query.VesselIMO != "" {
 			return slices.ContainsFunc(schedule.Legs, func(leg *schema.Leg) bool {
 				return leg.Transportations.Reference == query.VesselIMO
@@ -40,7 +40,7 @@ func WithVesselIMO() ScheduleFilterOption {
 }
 
 func WithService() ScheduleFilterOption {
-	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+	return func(schedule *schema.P2PSchedule, query *schema.QueryParams) bool {
 		if query.Service != "" {
 			return slices.ContainsFunc(schedule.Legs, func(leg *schema.Leg) bool {
 				return leg.Services != nil && leg.Services.ServiceCode == query.Service
@@ -51,7 +51,7 @@ func WithService() ScheduleFilterOption {
 }
 
 func ScheduleFilters(opts ...ScheduleFilterOption) ScheduleFilterOption {
-	return func(schedule *schema.Schedule, query *schema.QueryParams) bool {
+	return func(schedule *schema.P2PSchedule, query *schema.QueryParams) bool {
 		result := true
 		for _, opt := range opts {
 			result = result && opt(schedule, query)

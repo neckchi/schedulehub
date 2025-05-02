@@ -53,7 +53,7 @@ func getSQLquery() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	sqlFilePath := filepath.Join(currentDir+"/internal/handlers/master_vessel_schedule", "master_voyage.sql")
+	sqlFilePath := filepath.Join(currentDir+"/internal/handlers/mvs_handler", "master_vessel_schedules.sql")
 	return os.ReadFile(sqlFilePath)
 }
 

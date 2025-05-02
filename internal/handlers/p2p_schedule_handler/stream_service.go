@@ -1,14 +1,15 @@
-package p2p_schedule
+package p2p_schedule_handler
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator/v10"
-	"github.com/neckchi/schedulehub/external/p2p_schedule"
+	"github.com/neckchi/schedulehub/external/carrier_p2p_schedule"
 	httpclient "github.com/neckchi/schedulehub/internal/http"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
+	"github.com/neckchi/schedulehub/internal/utils"
 	log "github.com/sirupsen/logrus"
 	"iter"
 	"slices"
@@ -21,7 +22,7 @@ type ScheduleStreamingService struct {
 	done        <-chan int
 	client      *httpclient.HttpClient
 	env         *env.Manager
-	p2p         *p2p_schedule.ScheduleServiceFactory
+	p2p         *carrier_p2p_schedule.P2PScheduleServiceFactory
 	queryParams *schema.QueryParams
 }
 
@@ -31,7 +32,7 @@ func NewScheduleStreamingService(
 	done <-chan int,
 	client *httpclient.HttpClient,
 	env *env.Manager,
-	p2p *p2p_schedule.ScheduleServiceFactory,
+	p2p *carrier_p2p_schedule.P2PScheduleServiceFactory,
 	queryParams *schema.QueryParams,
 ) *ScheduleStreamingService {
 	return &ScheduleStreamingService{
@@ -61,8 +62,8 @@ func (sss *ScheduleStreamingService) FanOutScheduleChannels() []<-chan any {
 }
 
 // ConsolidateSchedule creates a channel for schedule consolidation
-func (sss *ScheduleStreamingService) ConsolidateSchedule(scac schema.CarrierCode) <-chan []*schema.Schedule {
-	stream := make(chan []*schema.Schedule)
+func (sss *ScheduleStreamingService) ConsolidateSchedule(scac schema.CarrierCode) <-chan []*schema.P2PSchedule {
+	stream := make(chan []*schema.P2PSchedule)
 	go func() {
 		defer close(stream)
 		select {
@@ -78,7 +79,7 @@ func (sss *ScheduleStreamingService) ConsolidateSchedule(scac schema.CarrierCode
 }
 
 // FetchCarrierSchedule fetches schedule for a specific carrier
-func (sss *ScheduleStreamingService) FetchCarrierSchedule(scac schema.CarrierCode) []*schema.Schedule {
+func (sss *ScheduleStreamingService) FetchCarrierSchedule(scac schema.CarrierCode) []*schema.P2PSchedule {
 	if sss.ctx.Err() != nil {
 		log.Infof("Context canceled before fetching schedule for %s", scac)
 		return nil
@@ -92,8 +93,8 @@ func (sss *ScheduleStreamingService) FetchCarrierSchedule(scac schema.CarrierCod
 	return schedules
 }
 
-func (sss *ScheduleStreamingService) PostFilter(schedules []*schema.Schedule, filter ScheduleFilterOption) iter.Seq[*schema.Schedule] {
-	return func(yield func(*schema.Schedule) bool) {
+func (sss *ScheduleStreamingService) PostFilter(schedules []*schema.P2PSchedule, filter ScheduleFilterOption) iter.Seq[*schema.P2PSchedule] {
+	return func(yield func(*schema.P2PSchedule) bool) {
 		for _, schedule := range schedules {
 			if filter(schedule, sss.queryParams) && !yield(schedule) {
 				return
@@ -102,8 +103,8 @@ func (sss *ScheduleStreamingService) PostFilter(schedules []*schema.Schedule, fi
 	}
 }
 
-func (sss *ScheduleStreamingService) FilterSchedule(stream <-chan []*schema.Schedule, filter ScheduleFilterOption) <-chan []*schema.Schedule {
-	out := make(chan []*schema.Schedule)
+func (sss *ScheduleStreamingService) FilterSchedule(stream <-chan []*schema.P2PSchedule, filter ScheduleFilterOption) <-chan []*schema.P2PSchedule {
+	out := make(chan []*schema.P2PSchedule)
 
 	go func() {
 		defer close(out)
@@ -121,7 +122,7 @@ func (sss *ScheduleStreamingService) FilterSchedule(stream <-chan []*schema.Sche
 }
 
 // ValidateSchedules validates the schedules and returns a channel
-func (sss *ScheduleStreamingService) ValidateSchedules(stream <-chan []*schema.Schedule) <-chan any {
+func (sss *ScheduleStreamingService) ValidateSchedules(stream <-chan []*schema.P2PSchedule) <-chan any {
 	out := make(chan any)
 	go func() {
 		defer close(out)
@@ -141,7 +142,7 @@ func (sss *ScheduleStreamingService) ValidateSchedules(stream <-chan []*schema.S
 }
 
 // validSchedulesFn validates individual schedules
-func (sss *ScheduleStreamingService) validSchedulesFn(schedules []*schema.Schedule) bool {
+func (sss *ScheduleStreamingService) validSchedulesFn(schedules []*schema.P2PSchedule) bool {
 	for _, schedule := range schedules {
 		if err := schema.P2PResponseValidate.Struct(schedule); err != nil {
 			if validationErrors, ok := err.(validator.ValidationErrors); ok {
@@ -187,7 +188,7 @@ func (sss *ScheduleStreamingService) FanIn(channels ...<-chan any) <-chan any {
 }
 
 // StreamResponse handles the streaming of response data
-func (sss *ScheduleStreamingService) StreamResponse(w flushWriter, fannedIn <-chan any) {
+func (sss *ScheduleStreamingService) StreamResponse(w utils.FlushWriter, fannedIn <-chan any) {
 	_, _ = w.Write([]byte(fmt.Sprintf(
 		`{"origin":"%s","destination":"%s","schedules":[`, sss.queryParams.PointFrom, sss.queryParams.PointTo,
 	)))
@@ -206,7 +207,7 @@ func (sss *ScheduleStreamingService) StreamResponse(w flushWriter, fannedIn <-ch
 			case <-sss.ctx.Done():
 				return
 			default:
-				scheduleBatch, _ := schedules.([]*schema.Schedule)
+				scheduleBatch, _ := schedules.([]*schema.P2PSchedule)
 				for _, schedule := range scheduleBatch {
 					if !first {
 						_, _ = w.Write([]byte(","))

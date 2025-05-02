@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"fmt"
@@ -16,8 +16,8 @@ type CarrierConfig struct {
 	AuthURL          string
 	LocURL           string
 	Method           string
-	LocDuration      time.Duration
-	LocKey           string
+	LocationDuration time.Duration
+	LocationKey      string
 	RequiresLocation bool `default:"false"`
 	CacheDuration    time.Duration
 	CacheKey         string
@@ -25,16 +25,16 @@ type CarrierConfig struct {
 	AuthExpiration   time.Duration
 	AuthSchema       interfaces.TokenProvider
 	LocSchema        interfaces.LocationProvider
-	BaseSchema       interfaces.ScheduleProvider
+	BaseSchema       interfaces.ScheduleProvider[[]*schema.P2PSchedule, *schema.QueryParams]
 }
 
 // Factory for creating schedule services
-type ScheduleServiceFactory struct {
+type P2PScheduleServiceFactory struct {
 	configs map[schema.CarrierCode]CarrierConfig
 }
 
-func NewScheduleServiceFactory(e *env.Manager) *ScheduleServiceFactory {
-	return &ScheduleServiceFactory{
+func NewP2PScheduleServiceFactory(e *env.Manager) *P2PScheduleServiceFactory {
+	return &P2PScheduleServiceFactory{
 		configs: map[schema.CarrierCode]CarrierConfig{
 			schema.ZIMU: {
 				Name:           "ZIM",
@@ -143,8 +143,8 @@ func NewScheduleServiceFactory(e *env.Manager) *ScheduleServiceFactory {
 				Method:           http.MethodGet,
 				CacheDuration:    6 * time.Hour,
 				CacheKey:         "maersk a/s schedule",
-				LocDuration:      8000 * time.Hour,
-				LocKey:           "maersk location",
+				LocationDuration: 8000 * time.Hour,
+				LocationKey:      "maersk location",
 				RequiresLocation: true,
 				RequiresAuth:     false,
 				BaseSchema:       &MaerskScheduleResponse{},
@@ -157,8 +157,8 @@ func NewScheduleServiceFactory(e *env.Manager) *ScheduleServiceFactory {
 				Method:           http.MethodGet,
 				CacheDuration:    6 * time.Hour,
 				CacheKey:         "maersk line schedule",
-				LocDuration:      8000 * time.Hour,
-				LocKey:           "maersk location",
+				LocationDuration: 8000 * time.Hour,
+				LocationKey:      "maersk location",
 				RequiresLocation: true,
 				RequiresAuth:     false,
 				BaseSchema:       &MaerskScheduleResponse{},
@@ -170,7 +170,7 @@ func NewScheduleServiceFactory(e *env.Manager) *ScheduleServiceFactory {
 	}
 }
 
-func (f *ScheduleServiceFactory) CreateScheduleService(carrier schema.CarrierCode) (interfaces.Schedule, error) {
+func (f *P2PScheduleServiceFactory) CreateScheduleService(carrier schema.CarrierCode) (interfaces.Schedule[[]*schema.P2PSchedule, *schema.QueryParams], error) {
 	config, exists := f.configs[carrier]
 	if !exists {
 		log.Errorf("unsupported carrier: %s", carrier)
@@ -194,8 +194,8 @@ func (f *ScheduleServiceFactory) CreateScheduleService(carrier schema.CarrierCod
 			LocationUrl:    config.LocURL,
 			Method:         config.Method,
 			Secrets:        config.LocSchema,
-			LocationExpiry: config.LocDuration,
-			Namespace:      config.LocKey,
+			LocationExpiry: config.LocationDuration,
+			Namespace:      config.LocationKey,
 		}
 	}
 
@@ -206,6 +206,6 @@ func (f *ScheduleServiceFactory) CreateScheduleService(carrier schema.CarrierCod
 		Namespace:      config.CacheKey,
 	}
 
-	genericScheduleService := &interfaces.ScheduleService{Token: auth, Location: loc, ScheduleConfig: scheduleConfig, ScheduleProvider: config.BaseSchema}
+	genericScheduleService := &interfaces.ScheduleService[[]*schema.P2PSchedule, *schema.QueryParams]{Token: auth, Location: loc, ScheduleConfig: scheduleConfig, ScheduleProvider: config.BaseSchema}
 	return genericScheduleService, nil
 }

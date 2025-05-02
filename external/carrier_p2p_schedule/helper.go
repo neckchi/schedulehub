@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"time"

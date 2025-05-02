@@ -12,6 +12,12 @@ import (
 )
 
 func main() {
+	healthRouter := routers.HealthCheckRouter()
+	healthServer := &http.Server{
+		Addr:    ":8001",
+		Handler: healthRouter,
+	}
+
 	configRouter := routers.AppConfigRouter()
 	configServer := &http.Server{
 		Addr:    ":8004",
@@ -28,6 +34,12 @@ func main() {
 		Addr:    ":8005",
 		Handler: voyageRouter,
 	}
+	go func() {
+		log.Info("Starting HTTP Server on port 8001 for health check")
+		if err := healthServer.ListenAndServe(); err != http.ErrServerClosed {
+			log.Error("Server Error: ", err)
+		}
+	}()
 
 	go func() {
 		log.Info("Starting HTTP Server on port 8004 for app config")
@@ -60,6 +72,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// Wait for all active requests to complete
+	_ = healthServer.Shutdown(ctx)
 	_ = configServer.Shutdown(ctx)
 	_ = scheduleServer.Shutdown(ctx)
 	_ = voyageServer.Shutdown(ctx)

@@ -18,7 +18,10 @@
     │   ├── location_interface.go             # location interface
     │   ├── schedule_interface.go             # schedule configuration
     │   ├── token_interface.go                # token configuration
-    ├── p2p_schedule/                         # external carrier p2p schedule mapping
+    ├── carrier_vessel_schedule/              # external carrier vessel schedule mapping
+    │   │─── carriers_factory.go              # Factory for carrier interfaces
+    │   │─── maersk.go                        # Maersk carrier biz logic
+    ├── carrier_p2p_schedule/                 # external carrier p2p schedule mapping
     │   │─── carriers_factory.go              # Factory for carrier interfaces
     │   │─── cma.go                           # CMA carrier logic
     │   │─── hapag.go                         # Hapag-Lloyd carrier bizlogic
@@ -32,14 +35,16 @@
     ├── database/                             # Database management
     │   ├── oracle.go                         # Oracle database logic
     │   ├── redis.go                          # Redis database logic
+    ├── dependencies/                         # Dependencies management
+    │   ├── dependencies.go                   # dependencies for routers and hanlders
     ├── exceptions/                           # Exception handling
     │   ├── tracker.go                        # Tracker exception handling
     ├── handlers/                             # Request handlers
-    ├── master_vessel_schedule/               # master vessel schedule handler
-    │   ├── master_voyage.go                  # Master voyage handler
-    │   ├── master_voyage.sql                 # SQL for master voyage
-    │   ├── mvs_steam.go                      # Master Voyage Stream service(Part Of voyage handler)
-    ├── p2p_schedule/                         # p2p schedule handler
+    ├── mvs_hanlder/                          # master vessel schedule handler
+    │   ├── master_vessel_schedules.go        # Master vessel schedule handler
+    │   ├── master_vessel_schedules.sql       # SQL for master vessel schedule
+    │   ├── mvs_steam.go                      # Master Vessel Schedule Stream service(Part Of voyage handler)
+    ├── p2p_schedule_handler/                 # p2p schedule handler
     │   ├── filter_map.go                     # Filter and map logic
     │   ├── p2p_schedules.go                  # P2P schedules handler
     │   ├── stream_service.go                 # P2P Stream service(Part Of P2P schedules handler)
@@ -58,17 +63,20 @@
     │   ├── recovery.go                       # Recovery middleware
     ├── routers/                              # API routers
     │   ├── app_config_router.go              # App configuration routes
-    │   ├── schedule_router.go                # Schedule-related routes
-    │   ├── voyage_router.go                  # Voyage-related routes
+    │   ├── master_vessel_schedule_router.go  # master vessel schedule router routes
+    │   ├── p2p_schedule_router.go            # p2p schedule router routes
+    │   ├── health_check_router.go            # health check router routes
     ├── schema/                               # API schema definitions
-    │   ├── master_voyage_schema.go           # Master voyage schema
-    │   ├── p2p_schema.go                     # P2P Schedule schema
+    │   ├── mvs_schema.go                     # Master voyage schema
+    │   ├── p2p_schedule_schema.go            # P2P Schedule schema
     │   ├── request_element.go                # Request element schema
     │   ├── request_schema.go                 # Request schema
     ├── secret/                               # Secret management
     │   ├── env.go                            # Environment variables
     │   ├── errors.go                         # Error handling
     │   ├── validator.go                      # Validation logic
+    ├── utils/                                # utils management
+    │   ├── env.go                            # http flush writer(streaming)
     ├── tests/                                # Unit and integration tests
     ├── .gitignore                            # Git ignored files configuration
     ├── config.yaml                           # Configuration file
@@ -157,7 +165,7 @@ There are so many 'target' we can use. For the details,please check the MakeFile
   * http://127.0.0.1:8002/schedules/p2p?startDateType=Departure&searchRange=4&pointFrom=CNSHA&pointTo=DEHAM&startDate=2025-04-11
 
 * Example - Master Vessel Voyage
-  * http://127.0.0.1:8003/schedules/vv?scac=ANNU&vesselIMO=9348675&voyageNum=0Y1J1S1NL
+  * http://127.0.0.1:8003/schedules/mastervoyage?scac=ANNU&vesselIMO=9348675&voyageNum=0Y1J1S1NL
     
 * Example - Application Config
   * http://127.0.0.1:8004/read/service.registry.schedule

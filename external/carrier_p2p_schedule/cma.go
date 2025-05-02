@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"cmp"
@@ -111,7 +111,7 @@ var getLocationCode = func(cmaSchedule *CmaSchedule, portType string) string {
 
 const cmaDateFormat string = "2006-01-02T15:04:05Z"
 
-func (csp *CmaScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.Schedule, error) {
+func (csp *CmaScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.P2PSchedule, error) {
 	var getFirstEtdLastEta = func(cmaSchedule *CmaSchedule, portType string) string {
 		var reformatDate string
 		if portType == "etd" {
@@ -135,9 +135,9 @@ func (csp *CmaScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema
 	if err := json.Unmarshal(responseJson, &CMAScheduleData); err != nil {
 		return nil, err
 	}
-	var cmaScheduleList = make([]*schema.Schedule, 0, len(CMAScheduleData))
+	var cmaScheduleList = make([]*schema.P2PSchedule, 0, len(CMAScheduleData))
 	for _, route := range CMAScheduleData {
-		scheduleResult := &schema.Schedule{
+		scheduleResult := &schema.P2PSchedule{
 			Scac:          string(schema.InternalCodeToScac[route.ShippingCompany]),
 			PointFrom:     getLocationCode(&route, "pol"),
 			PointTo:       getLocationCode(&route, "pod"),
@@ -292,7 +292,7 @@ func (csp *CmaScheduleResponse) GenerateVoyageService(voyageDetails *Voyage) *sc
 	return voyageServices
 }
 
-func (csp *CmaScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
+func (csp *CmaScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParams]) interfaces.HeaderParams {
 	var specificRoutings string
 
 	extraCondition := strings.HasPrefix(p.Query.PointFrom, "US") && strings.HasPrefix(p.Query.PointTo, "US")

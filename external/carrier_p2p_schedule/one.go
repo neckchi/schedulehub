@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"cmp"
@@ -72,17 +72,17 @@ type OneScheduleResponse struct {
 
 const oneDateFormat = "2006-01-02 15:04:05"
 
-func (osp *OneScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.Schedule, error) {
+func (osp *OneScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.P2PSchedule, error) {
 	var oneScheduleData OneScheduleResponse
 	if err := json.Unmarshal(responseJson, &oneScheduleData); err != nil {
 		return nil, err
 	}
 	totalSchedules := len(oneScheduleData.Direct) + len(oneScheduleData.Transshipment)
-	var oneScheduleList = make([]*schema.Schedule, 0, totalSchedules)
+	var oneScheduleList = make([]*schema.P2PSchedule, 0, totalSchedules)
 
-	convertSchedule := func(schedule *OneRoute) *schema.Schedule {
+	convertSchedule := func(schedule *OneRoute) *schema.P2PSchedule {
 		tt := float64(schedule.TransitDurationHrsUtc) / 24
-		return &schema.Schedule{
+		return &schema.P2PSchedule{
 			Scac:          schedule.Scac,
 			PointFrom:     schedule.OriginUnloc,
 			PointTo:       schedule.DestinationUnloc,
@@ -282,7 +282,7 @@ func (osp *OneScheduleResponse) TokenHeaderParams(e *env.Manager) interfaces.Hea
 	return headerParams
 }
 
-func (osp *OneScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
+func (osp *OneScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParams]) interfaces.HeaderParams {
 	scheduleHeaders := map[string]string{
 		"apikey":        *p.Env.OneToken,
 		"Authorization": fmt.Sprintf("Bearer %s", p.Token.Data["access_token"].(string)),

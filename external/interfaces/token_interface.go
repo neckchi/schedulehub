@@ -20,16 +20,16 @@ type TokenProvider interface {
 	TokenHeaderParams(e *env.Manager) HeaderParams
 }
 
+type TokenResponse struct {
+	Data map[string]interface{}
+}
+
 type OAuth2 struct {
 	TokenUrl    string
 	Method      string
 	Secrets     TokenProvider
 	TokenExpiry time.Duration
 	Namespace   string
-}
-
-type TokenResponse struct {
-	Data map[string]interface{}
 }
 
 func (o *OAuth2) GetOAuthToken(ctx context.Context, c *httpclient.HttpClient, e *env.Manager) (map[string]any, error) {

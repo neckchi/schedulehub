@@ -26,6 +26,7 @@ type CarrierEnvConfig struct {
 	IqaxToken     *string
 	MscURL        *string
 	MaerskP2PURL  *string
+	MaerskVSURL   *string
 	MaerskCFURL   *string
 	MaerskLocURL  *string
 	MaerskToken   *string
@@ -83,6 +84,7 @@ func (m *Manager) LoadConfig() error {
 	ZimClient := m.MustGet("ZIM_CLIENT")
 	ZimSecret := m.MustGet("ZIM_SECRET")
 	MaerskP2PURL := m.MustGet("MAEU_P2P")
+	MaerskVSURL := m.MustGet("MAEU_VESSEL_SCHEDULE")
 	MaerskCFURL := m.MustGet("MAEU_CUTOFF")
 	MaerskLocURL := m.MustGet("MAEU_LOCATION")
 	MaerskToken := m.MustGet("MAEU_TOKEN")
@@ -124,6 +126,7 @@ func (m *Manager) LoadConfig() error {
 		ZimClient:     &ZimClient,
 		ZimSecret:     &ZimSecret,
 		MaerskP2PURL:  &MaerskP2PURL,
+		MaerskVSURL:   &MaerskVSURL,
 		MaerskCFURL:   &MaerskCFURL,
 		MaerskLocURL:  &MaerskLocURL,
 		MaerskToken:   &MaerskToken,

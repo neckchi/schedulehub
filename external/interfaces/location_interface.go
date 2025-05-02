@@ -25,11 +25,6 @@ type LocationService struct {
 	Namespace      string
 }
 
-//
-//type LocationService struct {
-//	LocationConfig
-//}
-
 func (ls *LocationService) GetLocationDetails(ctx context.Context, c *httpclient.HttpClient, e *env.Manager, p string) ([]map[string]any, error) {
 	headerParams := ls.Secrets.LocationHeaderParams(e, p)
 	responseJson, err := c.Fetch(ctx, ls.Method, &ls.LocationUrl, &headerParams.Params, &headerParams.Headers, ls.Namespace, ls.LocationExpiry)

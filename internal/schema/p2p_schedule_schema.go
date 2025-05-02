@@ -33,7 +33,7 @@ func init() {
 
 	P2PResponseValidate.RegisterStructValidation(TransportationValidation, Transportation{})
 	P2PResponseValidate.RegisterStructValidation(LegEventDateValidation, Leg{})
-	P2PResponseValidate.RegisterStructValidation(ScheduleEventDateValidation, Schedule{})
+	P2PResponseValidate.RegisterStructValidation(ScheduleEventDateValidation, P2PSchedule{})
 
 }
 
@@ -143,7 +143,7 @@ func LegEventDateValidation(sl validator.StructLevel) {
 }
 
 // Schedule struct equivalent in Go
-type Schedule struct {
+type P2PSchedule struct {
 	Scac          string `json:"scac" validate:"required"`
 	PointFrom     string `json:"pointFrom" validate:"required,portCodeValidation"`
 	PointTo       string `json:"pointTo" validate:"required,portCodeValidation"`
@@ -156,7 +156,7 @@ type Schedule struct {
 
 func ScheduleEventDateValidation(sl validator.StructLevel) {
 	layout := "2006-01-02T15:04:05"
-	s := sl.Current().Interface().(Schedule)
+	s := sl.Current().Interface().(P2PSchedule)
 	etd, _ := time.Parse(layout, s.Etd)
 	eta, _ := time.Parse(layout, s.Eta)
 
@@ -168,9 +168,9 @@ func ScheduleEventDateValidation(sl validator.StructLevel) {
 
 // Product struct equivalent in Go
 type Product struct {
-	Origin      string      `json:"origin" validate:"required,portCodeValidation"`
-	Destination string      `json:"destination" validate:"required,portCodeValidation"`
-	Schedules   []*Schedule `json:"schedules" validate:"dive"`
+	Origin      string         `json:"origin" validate:"required,portCodeValidation"`
+	Destination string         `json:"destination" validate:"required,portCodeValidation"`
+	Schedules   []*P2PSchedule `json:"schedules" validate:"dive"`
 }
 
 // HealthCheck struct equivalent in Go

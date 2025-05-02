@@ -15,24 +15,30 @@ type HeaderParams struct {
 	Params  map[string]string
 }
 
-// Might have different way of fetching schedule
-type Schedule interface {
-	FetchSchedule(ctx context.Context, c *httpclient.HttpClient, e *env.Manager, q *schema.QueryParams, scac schema.CarrierCode) ([]*schema.Schedule, error)
+// Define a type constraint for the return type
+type ScheduleOutputType interface {
+	[]*schema.P2PSchedule | *schema.MasterVesselSchedule
 }
 
-type ScheduleArgs struct {
+// Might have different way of fetching schedule
+type Schedule[T ScheduleOutputType, Q any] interface {
+	FetchSchedule(ctx context.Context, c *httpclient.HttpClient, e *env.Manager, q Q, scac schema.CarrierCode) (T, error)
+}
+
+type ScheduleArgs[Q any] struct {
 	Token       *TokenResponse
 	Scac        schema.CarrierCode
 	Env         *env.Manager
-	Query       *schema.QueryParams
+	Query       Q
 	Origin      []map[string]any //json file
 	Destination []map[string]any
 }
 
-// Each carrier has different struct to manage the heaader params and schedule
-type ScheduleProvider interface {
-	ScheduleHeaderParams(*ScheduleArgs) HeaderParams
-	GenerateSchedule(responseJson []byte) ([]*schema.Schedule, error)
+// Each carrier has different struct to manage the heaader params and schedule generation so we built interface to ignore the underlying struct
+// as long as  the struct has the function mentioned in the below interface, the fn will be working out.
+type ScheduleProvider[T ScheduleOutputType, Q any] interface {
+	ScheduleHeaderParams(*ScheduleArgs[Q]) HeaderParams
+	GenerateSchedule(responseJson []byte) (T, error)
 }
 
 type ScheduleConfig struct {
@@ -42,14 +48,14 @@ type ScheduleConfig struct {
 	Namespace      string
 }
 
-type ScheduleService struct {
+type ScheduleService[T ScheduleOutputType, Q any] struct {
 	Token
 	Location
 	ScheduleConfig
-	ScheduleProvider
+	ScheduleProvider[T, Q]
 }
 
-func (ss *ScheduleService) FetchSchedule(ctx context.Context, c *httpclient.HttpClient, e *env.Manager, q *schema.QueryParams, scac schema.CarrierCode) ([]*schema.Schedule, error) {
+func (ss *ScheduleService[T, Q]) FetchSchedule(ctx context.Context, c *httpclient.HttpClient, e *env.Manager, querySchema Q, scac schema.CarrierCode) (T, error) {
 	var headerParams HeaderParams
 
 	switch {
@@ -62,24 +68,26 @@ func (ss *ScheduleService) FetchSchedule(ctx context.Context, c *httpclient.Http
 			return nil, fmt.Errorf("failed to get auth token: %w", err)
 		}
 		token := &TokenResponse{Data: tokenData}
-		arguments := &ScheduleArgs{Token: token, Env: e, Query: q}
+		arguments := &ScheduleArgs[Q]{Token: token, Env: e, Query: querySchema}
 		headerParams = ss.ScheduleProvider.ScheduleHeaderParams(arguments)
 
 	case func() bool {
 		location, _ := ss.Location.(*LocationService)
 		return location != nil
 	}():
-		pol, _ := ss.Location.GetLocationDetails(ctx, c, e, q.PointFrom)
-		pod, _ := ss.Location.GetLocationDetails(ctx, c, e, q.PointTo)
-		if pod == nil || pol == nil {
-			log.Info("Either POL or POD is unavailable ")
-			break
-		} else {
-			arguments := &ScheduleArgs{Scac: scac, Env: e, Query: q, Origin: pol, Destination: pod}
-			headerParams = ss.ScheduleProvider.ScheduleHeaderParams(arguments)
+		if queryLocation, ok := any(querySchema).(*schema.QueryParams); ok {
+			pol, _ := ss.Location.GetLocationDetails(ctx, c, e, queryLocation.PointFrom)
+			pod, _ := ss.Location.GetLocationDetails(ctx, c, e, queryLocation.PointTo)
+			if pod == nil || pol == nil {
+				log.Info("Either POL or POD is unavailable ")
+				break
+			} else {
+				arguments := &ScheduleArgs[Q]{Scac: scac, Env: e, Query: querySchema, Origin: pol, Destination: pod}
+				headerParams = ss.ScheduleProvider.ScheduleHeaderParams(arguments)
+			}
 		}
 	default:
-		arguments := &ScheduleArgs{Scac: scac, Env: e, Query: q}
+		arguments := &ScheduleArgs[Q]{Scac: scac, Env: e, Query: querySchema}
 		headerParams = ss.ScheduleProvider.ScheduleHeaderParams(arguments)
 	}
 	if headerParams.Headers != nil {

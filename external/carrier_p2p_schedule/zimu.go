@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"encoding/json"
@@ -46,15 +46,15 @@ type zleg struct {
 
 const zimDateFormat string = "2006-01-02T15:04:05.000-07:00"
 
-func (zs *ZimScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.Schedule, error) {
+func (zs *ZimScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.P2PSchedule, error) {
 	var zimScheduleData ZimScheduleResponse
 	err := json.Unmarshal(responseJson, &zimScheduleData)
 	if err != nil {
 		return nil, err
 	}
-	var zimScheduleList = make([]*schema.Schedule, 0, len(zimScheduleData.Response.Routes))
+	var zimScheduleList = make([]*schema.P2PSchedule, 0, len(zimScheduleData.Response.Routes))
 	for _, route := range zimScheduleData.Response.Routes {
-		scheduleResult := &schema.Schedule{
+		scheduleResult := &schema.P2PSchedule{
 			Scac:          "ZIMU",
 			PointFrom:     route.DeparturePort,
 			PointTo:       route.ArrivalPort,
@@ -219,7 +219,7 @@ func (zs *ZimScheduleResponse) TokenHeaderParams(e *env.Manager) interfaces.Head
 	return headerParams
 }
 
-func (zs *ZimScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
+func (zs *ZimScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParams]) interfaces.HeaderParams {
 	parsedTime, _ := time.Parse("2006-01-02", p.Query.StartDate)
 	scheduleHeaders := map[string]string{
 		"Ocp-Apim-Subscription-Key": *p.Env.ZimToken,

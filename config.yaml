@@ -3,7 +3,7 @@ base:
   redis:
     host: redis
     port: 8000
-service.registry.schedule:
+service.registry.p2p:
   scheduleExpiry: 6
   activeCarriers:
     CMDU: true
@@ -16,5 +16,14 @@ service.registry.schedule:
     OOLU: true
     COSU: true
     ONEY: true
+    MAEU: true
+    MAEI: true
+service.registry.mvs:
+  scheduleExpiry: 6
+  externalAPICarriers:
+    CMDU: false
+    ANNU: false
+    CHNL: false
+    APLU: false
     MAEU: true
     MAEI: true

@@ -3,13 +3,14 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"reflect"
+	"strconv"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/neckchi/schedulehub/internal/exceptions"
 	"github.com/neckchi/schedulehub/internal/schema"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"reflect"
-	"strconv"
 )
 
 type queryContextKey string
@@ -19,56 +20,87 @@ const (
 	VVQueryParamsKey  queryContextKey = "VVQueryParams"
 )
 
-var allowParamsList = func(schemaStruct interface{}) map[string]bool {
+// allowedParams creates a map of valid JSON field tags for a given struct.
+func allowedParams(schemaStruct interface{}) map[string]struct{} {
 	val := reflect.ValueOf(schemaStruct)
-	var jsonTags = make(map[string]bool)
+	jsonTags := make(map[string]struct{}, val.Type().NumField())
 	for i := 0; i < val.Type().NumField(); i++ {
-		jsonTag := val.Type().Field(i).Tag.Get("json")
-		jsonTags[jsonTag] = true
+		if tag := val.Type().Field(i).Tag.Get("json"); tag != "" {
+			jsonTags[tag] = struct{}{}
+		}
 	}
 	return jsonTags
 }
 
-func P2PQueryValidation(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query()
+// validateQueryParams checks if query parameters are allowed for a given schema.
+func validateQueryParams(w http.ResponseWriter, query map[string][]string, schemaStruct interface{}) bool {
+	allowed := allowedParams(schemaStruct)
+	for param := range query {
+		if _, ok := allowed[param]; !ok {
+			err := fmt.Errorf("invalid parameter: %s", param)
+			log.Error(err)
+			exceptions.RequestErrorHandler(w, err)
+			return false
+		}
+	}
+	return true
+}
 
-		for params := range query {
-			if !allowParamsList(schema.QueryParams{})[params] {
-				wrongParmeters := fmt.Errorf("wrong parmeters provided: %s", params)
-				log.Error(wrongParmeters)
-				exceptions.RequestErrorHandler(w, wrongParmeters)
-				return
-			}
+// validateStruct validates a struct and returns formatted error if validation fails.
+func validateStruct(w http.ResponseWriter, params interface{}) bool {
+	if err := schema.RequestValidate.Struct(params); err != nil {
+		for _, e := range err.(validator.ValidationErrors) {
+			invalidQuery := fmt.Errorf("invalid field value in '%s': %v", e.Field(), e.Value())
+			exceptions.RequestErrorHandler(w, invalidQuery)
+			return false
+		}
+	}
+	return true
+}
+
+// P2PQueryValidation validates query parameters for point-to-point requests.
+func P2PQueryValidation(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query()
+		if !validateQueryParams(w, query, schema.QueryParams{}) {
+			return
 		}
 
+		// Initialize active carriers
 		activeCarrierCodes := make([]schema.CarrierCode, 0, 15)
-		scacConfig := r.Context().Value(scheduleConfig).(map[string]interface{})["activeCarriers"]
+		scacConfig, ok := r.Context().Value(ScheduleConfig).(map[string]interface{})["activeCarriers"].(map[string]interface{})
+		if !ok {
+			err := fmt.Errorf("invalid schedule configuration")
+			log.Error(err)
+			exceptions.RequestErrorHandler(w, err)
+			return
+		}
+
 		excludedCarriers := map[schema.CarrierCode]bool{
 			schema.ANNU: true,
 			schema.CHNL: true,
 		}
-		switch scacList := query["scac"]; len(scacList) {
-		case 0:
-			for carrierCode := range scacConfig.(map[string]interface{}) {
+
+		// Process SCAC parameters
+		if scacList := query["scac"]; len(scacList) > 0 {
+			for _, carrierCode := range scacList {
+				if active, ok := scacConfig[carrierCode].(bool); !ok || !active {
+					err := fmt.Errorf("inactive or invalid SCAC: %s", carrierCode)
+					log.Error(err)
+					exceptions.RequestErrorHandler(w, err)
+					return
+				}
+				activeCarrierCodes = append(activeCarrierCodes, schema.CarrierCode(carrierCode))
+			}
+		} else {
+			for carrierCode := range scacConfig {
 				if !excludedCarriers[schema.CarrierCode(carrierCode)] {
 					activeCarrierCodes = append(activeCarrierCodes, schema.CarrierCode(carrierCode))
 				}
 			}
-		default:
-			for _, carrierCode := range scacList {
-				active, exist := scacConfig.(map[string]interface{})[carrierCode].(bool)
-				if active && exist {
-					activeCarrierCodes = append(activeCarrierCodes, schema.CarrierCode(carrierCode))
-				} else {
-					inactiveCarrierCodes := fmt.Errorf("inactive scac provided: %s", carrierCode)
-					exceptions.RequestErrorHandler(w, inactiveCarrierCodes)
-					return
-				}
-			}
-
 		}
 
+		// Parse query parameters
 		searchRange, _ := strconv.Atoi(query.Get("searchRange"))
 		directOnly, _ := strconv.ParseBool(query.Get("directOnly"))
 		requestParams := schema.QueryParams{
@@ -84,43 +116,30 @@ func P2PQueryValidation(next http.Handler) http.Handler {
 			Service:       query.Get("service"),
 		}
 
-		if err := schema.RequestValidate.Struct(requestParams); err != nil {
-			var errorField string
-			var errorValue any
-			for _, err := range err.(validator.ValidationErrors) {
-				errorField = err.Field()
-				errorValue = err.Value()
-			}
-			invalidQuery := fmt.Errorf("invalid field value found in '%v' : %v ", errorField, errorValue)
-			exceptions.RequestErrorHandler(w, invalidQuery)
+		if !validateStruct(w, requestParams) {
 			return
 		}
+
 		ctx := context.WithValue(r.Context(), P2PQueryParamsKey, requestParams)
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(fn)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
+// VVQueryValidation validates query parameters for vessel-voyage requests.
 func VVQueryValidation(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-
-		for params := range query {
-			if !allowParamsList(schema.QueryParamsForVesselVoyage{})[params] {
-				wrongParmeters := fmt.Errorf("wrong parmeters provided: %s", params)
-				log.Error(wrongParmeters)
-				exceptions.RequestErrorHandler(w, wrongParmeters)
-				return
-			}
+		if !validateQueryParams(w, query, schema.QueryParamsForVesselVoyage{}) {
+			return
 		}
 
+		// Parse query parameters
 		dateRange, _ := strconv.Atoi(query.Get("dateRange"))
-		scacStrings := query["scac"] // []string
-		scacCarrierCodes := make([]schema.CarrierCode, len(scacStrings))
-		for i, scac := range scacStrings {
-			scacCarrierCodes[i] = schema.CarrierCode(scac)
+		scacCarrierCodes := make([]schema.CarrierCode, 0, len(query["scac"]))
+		for _, scac := range query["scac"] {
+			scacCarrierCodes = append(scacCarrierCodes, schema.CarrierCode(scac))
 		}
+
 		requestParams := schema.QueryParamsForVesselVoyage{
 			SCAC:      scacCarrierCodes,
 			VesselIMO: query.Get("vesselIMO"),
@@ -129,20 +148,11 @@ func VVQueryValidation(next http.Handler) http.Handler {
 			DateRange: dateRange,
 		}
 
-		if err := schema.RequestValidate.Struct(requestParams); err != nil {
-			var errorField string
-			var errorValue any
-			for _, err := range err.(validator.ValidationErrors) {
-				errorField = err.Field()
-				errorValue = err.Value()
-			}
-			invalidQuery := fmt.Errorf("invalid field value found in '%v' : %v ", errorField, errorValue)
-			exceptions.RequestErrorHandler(w, invalidQuery)
+		if !validateStruct(w, requestParams) {
 			return
 		}
+
 		ctx := context.WithValue(r.Context(), VVQueryParamsKey, requestParams)
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(fn)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"crypto/x509"
@@ -79,7 +79,7 @@ type MscCallDate struct {
 	SeqNoSpecified bool   `json:"SeqNoSpecified"`
 }
 
-func (msp *MscScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.Schedule, error) {
+func (msp *MscScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.P2PSchedule, error) {
 
 	var getFirstEtdLastEta = func(mscCall MscCall, dateType string) string {
 		var result string
@@ -96,14 +96,14 @@ func (msp *MscScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema
 	if err != nil {
 		return nil, err
 	}
-	var mscScheduleList = make([]*schema.Schedule, 0, len(mscScheduleData.MSCSchedule.Transactions))
+	var mscScheduleList = make([]*schema.P2PSchedule, 0, len(mscScheduleData.MSCSchedule.Transactions))
 	for _, schedule := range mscScheduleData.MSCSchedule.Transactions {
 		origin := schedule.Schedules[0].Calls[0]
 		destination := schedule.Schedules[len(schedule.Schedules)-1].Calls[1]
 		etd := getFirstEtdLastEta(origin, "ETD")
 		eta := getFirstEtdLastEta(destination, "ETA")
 
-		scheduleResult := &schema.Schedule{
+		scheduleResult := &schema.P2PSchedule{
 			Scac:          "MSCU",
 			PointFrom:     origin.Code,
 			PointTo:       destination.Code,
@@ -277,7 +277,7 @@ func (msp *MscScheduleResponse) TokenHeaderParams(e *env.Manager) interfaces.Hea
 	return headerParams
 }
 
-func (msp *MscScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
+func (msp *MscScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParams]) interfaces.HeaderParams {
 	var calculateEndDate = func(startDate string, searchRange int) string {
 		date, _ := time.Parse("2006-01-02", startDate)
 		endDate := date.AddDate(0, 0, searchRange*7)

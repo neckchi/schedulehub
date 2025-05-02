@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"cmp"
@@ -206,17 +206,17 @@ type FirstEtdLastEta struct{ firstEtd, lastEta string }
 
 const iqaxDateFormat string = "2006-01-02T15:04:05.000Z"
 
-func (isp *IqaxScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.Schedule, error) {
+func (isp *IqaxScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.P2PSchedule, error) {
 	var iqaxScheduleData IqaxScheduleResponse
 	err := json.Unmarshal(responseJson, &iqaxScheduleData)
 	if err != nil {
 		return nil, err
 	}
-	var iqaxScheduleList = make([]*schema.Schedule, 0, len(iqaxScheduleData.RouteGroupsList))
+	var iqaxScheduleList = make([]*schema.P2PSchedule, 0, len(iqaxScheduleData.RouteGroupsList))
 	for _, scheduleList := range iqaxScheduleData.RouteGroupsList {
 		for _, schedule := range scheduleList.Route {
 			scheduleDate := FirstEtdLastEta{firstEtd: ConvertDateFormat(schedule.Por.Etd, iqaxDateFormat), lastEta: ConvertDateFormat(&schedule.Fnd.Eta, iqaxDateFormat)}
-			scheduleResult := &schema.Schedule{
+			scheduleResult := &schema.P2PSchedule{
 				Scac:          schedule.CarrierScac,
 				PointFrom:     schedule.Por.Location.Unlocode,
 				PointTo:       schedule.Fnd.Location.Unlocode,
@@ -382,7 +382,7 @@ func (isp *IqaxScheduleResponse) GenerateVoyageService(legResponse *IqaxLeg) *sc
 	return voyageServices
 }
 
-func (isp *IqaxScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
+func (isp *IqaxScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParams]) interfaces.HeaderParams {
 	scheduleHeaders := map[string]string{"appKey": *p.Env.IqaxToken}
 	scheduleParams := map[string]string{"porID": p.Query.PointFrom, "fndID": p.Query.PointTo, "searchDuration": strconv.Itoa(p.Query.SearchRange)}
 

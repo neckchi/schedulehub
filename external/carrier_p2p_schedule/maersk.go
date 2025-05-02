@@ -1,4 +1,4 @@
-package p2p_schedule
+package carrier_p2p_schedule
 
 import (
 	"cmp"
@@ -93,17 +93,17 @@ type MaerskScheduleResponse struct {
 	OceanProducts []OceanProduct `json:"oceanProducts"`
 }
 
-func (maeusp *MaerskScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.Schedule, error) {
+func (maeusp *MaerskScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.P2PSchedule, error) {
 	var maerskScheduleData MaerskScheduleResponse
 	err := json.Unmarshal(responseJson, &maerskScheduleData)
 	if err != nil {
 		return nil, err
 	}
-	var maerskScheduleList = make([]*schema.Schedule, 0, len(maerskScheduleData.OceanProducts))
+	var maerskScheduleList = make([]*schema.P2PSchedule, 0, len(maerskScheduleData.OceanProducts))
 	for _, product := range maerskScheduleData.OceanProducts {
 		for _, schedule := range product.TransportSchedules {
 			tt, _ := strconv.Atoi(schedule.TransitTime)
-			scheduleResult := &schema.Schedule{
+			scheduleResult := &schema.P2PSchedule{
 				Scac:          product.VesselOperatorCarrierCode,
 				PointFrom:     cmp.Or(schedule.Facilities.CollectionOrigin.CityUNLocationCode, schedule.Facilities.CollectionOrigin.CityUNLocationCode),
 				PointTo:       cmp.Or(schedule.Facilities.DeliveryDestination.CityUNLocationCode, schedule.Facilities.DeliveryDestination.CityUNLocationCode),
@@ -240,7 +240,7 @@ func (maeusp *MaerskScheduleResponse) LocationHeaderParams(e *env.Manager, port 
 	return headerParams
 }
 
-func (maeusp *MaerskScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs) interfaces.HeaderParams {
+func (maeusp *MaerskScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParams]) interfaces.HeaderParams {
 	scheduleHeaders := map[string]string{
 		"Consumer-Key": *p.Env.MaerskToken,
 	}

@@ -32,16 +32,6 @@ type Port struct {
 	PortCode string `json:"portCode" validate:"required,portCodeValidation"`
 }
 
-type PortCalls struct {
-	Seq          int         `json:"seq" validate:"required"`
-	Key          interface{} `json:"key" validate:"required"`
-	Bound        interface{} `json:"bound" validate:"required"`
-	Voyage       interface{} `json:"voyage" validate:"required"`
-	PortEvent    string      `json:"portEvent" validate:"required"`
-	Port         Port        `json:"port" validate:"required"`
-	EstimateDate string      `json:"estimateDate" validate:"required"`
-}
-
 type VesselDetails struct {
 	VesselName string `json:"vesselName" validate:"required"`
 	Imo        string `json:"imo" validate:"required,imoValidation"`
@@ -51,12 +41,23 @@ type Services struct {
 	ServiceCode string `json:"serviceCode,omitempty"`
 }
 
-type MasterVoyage struct {
+type PortCalls struct {
+	Seq          int         `json:"seq" validate:"required"`
+	Key          interface{} `json:"key" validate:"required"`
+	Bound        interface{} `json:"bound" validate:"required"`
+	Voyage       interface{} `json:"voyage" validate:"required"`
+	Service      Services    `json:"service" validate:"omitempty"`
+	PortEvent    string      `json:"portEvent" validate:"required"`
+	Port         Port        `json:"port" validate:"required"`
+	EstimateDate string      `json:"estimateDate" validate:"required"`
+}
+
+type MasterVesselSchedule struct {
 	Scac       string        `json:"scac" validate:"required"`
 	Voyage     string        `json:"voyage" validate:"required"`
 	NextVoyage string        `json:"nextVoyage,omitempty"`
 	Vessel     VesselDetails `json:"vessel" validate:"required"`
-	Services   Services      `json:"services"`
+	Services   Services      `json:"services" validate:"required"`
 	Calls      []PortCalls   `json:"calls" `
 }
 
