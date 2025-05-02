@@ -40,8 +40,8 @@
     ├── exceptions/                           # Exception handling
     │   ├── tracker.go                        # Tracker exception handling
     ├── handlers/                             # Request handlers
-    ├── mvs_hanlder/                          # master vessel schedule handler
-    │   ├── master_vessel_schedules.go        # Master vessel schedule handler
+    ├── mvs_hanlder/                          # Master vessel schedule handler
+    │   ├── master_vessel_schedules.go        # Master vessel schedule handler logic
     │   ├── master_vessel_schedules.sql       # SQL for master vessel schedule
     │   ├── mvs_steam.go                      # Master Vessel Schedule Stream service(Part Of voyage handler)
     ├── p2p_schedule_handler/                 # p2p schedule handler
@@ -76,7 +76,7 @@
     │   ├── errors.go                         # Error handling
     │   ├── validator.go                      # Validation logic
     ├── utils/                                # utils management
-    │   ├── env.go                            # http flush writer(streaming)
+    │   ├── flustWriter.go                    # http flush writer(streaming)
     ├── tests/                                # Unit and integration tests
     ├── .gitignore                            # Git ignored files configuration
     ├── config.yaml                           # Configuration file
