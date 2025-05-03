@@ -21,16 +21,17 @@
     ├── carrier_vessel_schedule/              # external carrier vessel schedule mapping
     │   │─── carriers_factory.go              # Factory for carrier interfaces
     │   │─── maersk.go                        # Maersk carrier biz logic
+    │   │─── cma.go                           # CMA carrier logic
     ├── carrier_p2p_schedule/                 # external carrier p2p schedule mapping
     │   │─── carriers_factory.go              # Factory for carrier interfaces
     │   │─── cma.go                           # CMA carrier logic
     │   │─── hapag.go                         # Hapag-Lloyd carrier bizlogic
-    │   │─── helper.go                        # Helper functions
     │   │─── iqax.go                          # OOLU COSCO carrier biz logic
     │   │─── maersk.go                        # Maersk carrier biz logic
     │   │─── msc.go                           # MSC carrier biz logic
     │   │─── one.go                           # ONE carrier biz logic
     │   │─── zimu.go                          # ZIM carrier biz logic
+    ├── helper.go                             # Helper functions
     ├── internal/                             # Internal logic (not accessible externally)
     ├── database/                             # Database management
     │   ├── oracle.go                         # Oracle database logic
