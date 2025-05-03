@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
+	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
@@ -164,7 +165,7 @@ func (maeusp *MaerskScheduleResponse) GenerateLegPoints(legDetails *TransportLeg
 func (maeusp *MaerskScheduleResponse) GenerateEventDate(legDetails *TransportLeg) *schema.Leg {
 	etd := legDetails.DepartureDateTime
 	eta := legDetails.ArrivalDateTime
-	transitTime := CalculateTransitTime(&etd, &eta)
+	transitTime := external.CalculateTransitTime(&etd, &eta)
 
 	eventTime := &schema.Leg{
 		Etd:         etd,
@@ -177,7 +178,7 @@ func (maeusp *MaerskScheduleResponse) GenerateEventDate(legDetails *TransportLeg
 
 func (maeusp *MaerskScheduleResponse) GenerateTransport(legDetails *TransportLeg) *schema.Leg {
 
-	transportType, _ := getTransportType(legDetails.Transport.TransportMode)
+	transportType, _ := external.GetTransportType(legDetails.Transport.TransportMode)
 	transportName := legDetails.Transport.Vessel.VesselName
 	imoExist := legDetails.Transport.Vessel.VesselIMONumber != ""
 	var imo string

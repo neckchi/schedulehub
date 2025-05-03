@@ -21,9 +21,9 @@ service.registry.p2p:
 service.registry.mvs:
   scheduleExpiry: 6
   externalAPICarriers:
-    CMDU: false
-    ANNU: false
-    CHNL: false
-    APLU: false
+    CMDU: true
+    ANNU: true
+    CHNL: true
+    APLU: true
     MAEU: true
     MAEI: true

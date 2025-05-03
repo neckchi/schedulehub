@@ -3,6 +3,7 @@ package carrier_p2p_schedule
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
@@ -58,8 +59,8 @@ func (zs *ZimScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.
 			Scac:          "ZIMU",
 			PointFrom:     route.DeparturePort,
 			PointTo:       route.ArrivalPort,
-			Etd:           ConvertDateFormat(&route.DepartureDate, zimDateFormat),
-			Eta:           ConvertDateFormat(&route.ArrivalDate, zimDateFormat),
+			Etd:           external.ConvertDateFormat(&route.DepartureDate, zimDateFormat),
+			Eta:           external.ConvertDateFormat(&route.ArrivalDate, zimDateFormat),
 			TransitTime:   int(route.TransitTime),
 			Transshipment: len(route.RouteLegs) > 1,
 			Legs:          zs.GenerateScheduleLeg(route.RouteLegs),
@@ -110,12 +111,12 @@ func (zs *ZimScheduleResponse) GenerateLegPoints(legDetails *zleg) *schema.Leg {
 }
 
 func (zs *ZimScheduleResponse) GenerateEventDate(legDetails *zleg) *schema.Leg {
-	etd := ConvertDateFormat(&legDetails.DepartureDate, zimDateFormat)
-	eta := ConvertDateFormat(&legDetails.ArrivalDate, zimDateFormat)
-	transitTime := CalculateTransitTime(&etd, &eta)
-	cyCutoffDate := ConvertDateFormat(&legDetails.ContainerClosingDate, zimDateFormat)
-	docCutoffDate := ConvertDateFormat(&legDetails.DocClosingDate, zimDateFormat)
-	vgmCutoffDate := ConvertDateFormat(&legDetails.VgmClosingDate, zimDateFormat)
+	etd := external.ConvertDateFormat(&legDetails.DepartureDate, zimDateFormat)
+	eta := external.ConvertDateFormat(&legDetails.ArrivalDate, zimDateFormat)
+	transitTime := external.CalculateTransitTime(&etd, &eta)
+	cyCutoffDate := external.ConvertDateFormat(&legDetails.ContainerClosingDate, zimDateFormat)
+	docCutoffDate := external.ConvertDateFormat(&legDetails.DocClosingDate, zimDateFormat)
+	vgmCutoffDate := external.ConvertDateFormat(&legDetails.VgmClosingDate, zimDateFormat)
 
 	var cutoffs *schema.Cutoff
 	if cyCutoffDate != "" || docCutoffDate != "" || vgmCutoffDate != "" {
@@ -152,7 +153,7 @@ func (zs *ZimScheduleResponse) GenerateTransport(legDetails *zleg) *schema.Leg {
 		}
 	}
 	transportName := legDetails.VesselName
-	transportType, _ := getTransportType(transportName)
+	transportType, _ := external.GetTransportType(transportName)
 	imoCode := legDetails.LloydsCode
 	legLine := legDetails.Line
 	tr := schema.Transportation{

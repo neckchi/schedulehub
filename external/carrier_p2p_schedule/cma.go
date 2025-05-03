@@ -3,6 +3,7 @@ package carrier_p2p_schedule
 import (
 	"cmp"
 	"encoding/json"
+	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	"golang.org/x/text/cases"
@@ -117,14 +118,14 @@ func (csp *CmaScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema
 		if portType == "etd" {
 			for _, routeDetails := range cmaSchedule.RoutingDetails {
 				if routeDetails.PointFrom.DepartureDateGmt != "" {
-					reformatDate = ConvertDateFormat(&routeDetails.PointFrom.DepartureDateGmt, cmaDateFormat)
+					reformatDate = external.ConvertDateFormat(&routeDetails.PointFrom.DepartureDateGmt, cmaDateFormat)
 					break
 				}
 			}
 		} else {
 			for i := len(cmaSchedule.RoutingDetails) - 1; i >= 0; i-- {
 				if cmaSchedule.RoutingDetails[i].PointTo.ArrivalDateGmt != "" {
-					reformatDate = ConvertDateFormat(&cmaSchedule.RoutingDetails[i].PointTo.ArrivalDateGmt, cmaDateFormat)
+					reformatDate = external.ConvertDateFormat(&cmaSchedule.RoutingDetails[i].PointTo.ArrivalDateGmt, cmaDateFormat)
 					break
 				}
 			}
@@ -207,20 +208,20 @@ func (csp *CmaScheduleResponse) GenerateLegPoints(legDetails *RoutingDetail) *sc
 }
 
 func (csp *CmaScheduleResponse) GenerateEventDate(legDetails *RoutingDetail) *schema.Leg {
-	etd := cmp.Or(ConvertDateFormat(&legDetails.PointFrom.DepartureDateGmt, cmaDateFormat), time.Now().Format("2006-01-02T15:04:05"))
-	eta := cmp.Or(ConvertDateFormat(&legDetails.PointTo.ArrivalDateGmt, cmaDateFormat), time.Now().Format("2006-01-02T15:04:05"))
+	etd := cmp.Or(external.ConvertDateFormat(&legDetails.PointFrom.DepartureDateGmt, cmaDateFormat), time.Now().Format("2006-01-02T15:04:05"))
+	eta := cmp.Or(external.ConvertDateFormat(&legDetails.PointTo.ArrivalDateGmt, cmaDateFormat), time.Now().Format("2006-01-02T15:04:05"))
 	transitTime := legDetails.LegTransitTime
 	var cutoffs *schema.Cutoff
 	var cyCutoffDate, docCutoffDate, vgmCutoffDate string
 	c := &legDetails.PointFrom.CutOff
 	if c.PortCutoff != nil {
-		cyCutoffDate = ConvertDateFormat(&c.PortCutoff.Utc, cmaDateFormat)
+		cyCutoffDate = external.ConvertDateFormat(&c.PortCutoff.Utc, cmaDateFormat)
 	}
 	if c.ShippingInstructionAcceptance != nil {
-		docCutoffDate = ConvertDateFormat(&c.ShippingInstructionAcceptance.Utc, cmaDateFormat)
+		docCutoffDate = external.ConvertDateFormat(&c.ShippingInstructionAcceptance.Utc, cmaDateFormat)
 	}
 	if c.Vgm != nil {
-		vgmCutoffDate = ConvertDateFormat(&c.Vgm.Utc, cmaDateFormat)
+		vgmCutoffDate = external.ConvertDateFormat(&c.Vgm.Utc, cmaDateFormat)
 	}
 
 	if cyCutoffDate != "" && docCutoffDate != "" && vgmCutoffDate != "" {

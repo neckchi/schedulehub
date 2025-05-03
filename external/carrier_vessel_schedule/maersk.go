@@ -74,7 +74,7 @@ type MaerskCallSchedule struct {
 var scac schema.CarrierCode
 var imo string
 
-var eventType = map[string]string{
+var maeuEventType = map[string]string{
 	"ARRI": "Unloading",
 	"DEPA": "Loading",
 }
@@ -138,7 +138,7 @@ func (mvs *MaerskVesselSchedule) GenerateVesselCalls(vesselCalls []MaerskVesselC
 				Key:          imo + voyageNum + serviceCode,
 				Bound:        voyageDirection,
 				Voyage:       voyageNum,
-				PortEvent:    eventType[scheduleCalls.TransportEventTypeCode],
+				PortEvent:    maeuEventType[scheduleCalls.TransportEventTypeCode],
 				Service:      schema.Services{ServiceCode: serviceCode},
 				Port:         schema.Port{PortCode: portCalls.Facility.UNLocationCode, PortName: portCalls.Facility.PortName},
 				EstimateDate: scheduleCalls.ClassifierDateTime,

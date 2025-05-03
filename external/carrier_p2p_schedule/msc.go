@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
@@ -109,7 +110,7 @@ func (msp *MscScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema
 			PointTo:       destination.Code,
 			Etd:           etd,
 			Eta:           eta,
-			TransitTime:   CalculateTransitTime(&etd, &eta),
+			TransitTime:   external.CalculateTransitTime(&etd, &eta),
 			Transshipment: len(schedule.Schedules) > 1,
 			Legs:          msp.GenerateScheduleLeg(schedule.Schedules),
 		}
@@ -176,7 +177,7 @@ func (msp *MscScheduleResponse) GenerateEventDate(legDetails *MscSchedule) *sche
 	}
 	etd := getEventDate(legDetails.Calls[0], "ETD")
 	eta := getEventDate(legDetails.Calls[1], "ETA")
-	transitTime := CalculateTransitTime(&etd, &eta)
+	transitTime := external.CalculateTransitTime(&etd, &eta)
 	cyCutoffDate := getEventDate(legDetails.Calls[0], "CYCUTOFF")
 	docCutoffDate := getEventDate(legDetails.Calls[0], "SI")
 	vgmCutoffDate := getEventDate(legDetails.Calls[0], "VGM")

@@ -3,6 +3,7 @@ package carrier_p2p_schedule
 import (
 	"cmp"
 	"encoding/json"
+	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	log "github.com/sirupsen/logrus"
@@ -215,7 +216,7 @@ func (isp *IqaxScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schem
 	var iqaxScheduleList = make([]*schema.P2PSchedule, 0, len(iqaxScheduleData.RouteGroupsList))
 	for _, scheduleList := range iqaxScheduleData.RouteGroupsList {
 		for _, schedule := range scheduleList.Route {
-			scheduleDate := FirstEtdLastEta{firstEtd: ConvertDateFormat(schedule.Por.Etd, iqaxDateFormat), lastEta: ConvertDateFormat(&schedule.Fnd.Eta, iqaxDateFormat)}
+			scheduleDate := FirstEtdLastEta{firstEtd: external.ConvertDateFormat(schedule.Por.Etd, iqaxDateFormat), lastEta: external.ConvertDateFormat(&schedule.Fnd.Eta, iqaxDateFormat)}
 			scheduleResult := &schema.P2PSchedule{
 				Scac:          schedule.CarrierScac,
 				PointFrom:     schedule.Por.Location.Unlocode,
@@ -284,25 +285,25 @@ func (isp *IqaxScheduleResponse) GenerateEventDate(index int, scheduleDate First
 	var cutoffs *schema.Cutoff
 	if legResponse.FromPoint.DefaultCutoff != "" {
 		cutoffs = &schema.Cutoff{
-			CyCutoffDate: ConvertDateFormat(&legResponse.FromPoint.DefaultCutoff, iqaxDateFormat),
+			CyCutoffDate: external.ConvertDateFormat(&legResponse.FromPoint.DefaultCutoff, iqaxDateFormat),
 		}
 	}
 	var etd, eta string
 	const parseDateFormat string = "2006-01-02T15:04:05"
 	if index == 1 {
-		checkEtd := cmp.Or(ConvertDateFormat(&legResponse.FromPoint.Etd, iqaxDateFormat), scheduleDate.firstEtd)
+		checkEtd := cmp.Or(external.ConvertDateFormat(&legResponse.FromPoint.Etd, iqaxDateFormat), scheduleDate.firstEtd)
 		if legResponse.Vessel.Name == "TRUCK" {
 			parseEtd, _ := time.Parse(parseDateFormat, checkEtd)
 			etd = parseEtd.AddDate(0, 0, -legResponse.TransitTime).Format(parseDateFormat)
 		} else {
 			etd = checkEtd
 			parseEtd, _ := time.Parse(parseDateFormat, etd)
-			eta = cmp.Or(ConvertDateFormat(&legResponse.ToPoint.Eta, iqaxDateFormat), parseEtd.AddDate(0, 0, legResponse.TransitTime).Format(parseDateFormat))
+			eta = cmp.Or(external.ConvertDateFormat(&legResponse.ToPoint.Eta, iqaxDateFormat), parseEtd.AddDate(0, 0, legResponse.TransitTime).Format(parseDateFormat))
 		}
 	} else {
-		eta = cmp.Or(ConvertDateFormat(&legResponse.ToPoint.Eta, iqaxDateFormat), scheduleDate.lastEta)
+		eta = cmp.Or(external.ConvertDateFormat(&legResponse.ToPoint.Eta, iqaxDateFormat), scheduleDate.lastEta)
 		parseEta, _ := time.Parse(parseDateFormat, eta)
-		etd = cmp.Or(ConvertDateFormat(&legResponse.FromPoint.Etd, iqaxDateFormat), parseEta.AddDate(0, 0, -legResponse.TransitTime).Format(parseDateFormat))
+		etd = cmp.Or(external.ConvertDateFormat(&legResponse.FromPoint.Etd, iqaxDateFormat), parseEta.AddDate(0, 0, -legResponse.TransitTime).Format(parseDateFormat))
 	}
 
 	eventTime := &schema.Leg{

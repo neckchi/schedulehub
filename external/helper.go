@@ -1,10 +1,10 @@
-package carrier_p2p_schedule
+package external
 
 import (
 	"time"
 )
 
-func getTransportType(key string) (string, bool) {
+func GetTransportType(key string) (string, bool) {
 	transportTypeList := map[string]string{
 		"Land Trans":  "Truck",
 		"Feeder":      "Feeder",

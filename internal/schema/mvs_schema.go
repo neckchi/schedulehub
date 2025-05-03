@@ -39,6 +39,7 @@ type VesselDetails struct {
 
 type Services struct {
 	ServiceCode string `json:"serviceCode,omitempty"`
+	ServiceName string `json:"serviceName,omitempty"`
 }
 
 type PortCalls struct {

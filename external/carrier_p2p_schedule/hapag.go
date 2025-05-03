@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
+	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	"golang.org/x/text/cases"
@@ -76,15 +77,15 @@ func (hsp *HapagScheduleResponse) GenerateSchedule(responseJson []byte) ([]*sche
 	}
 	var hapagScheduleList = make([]*schema.P2PSchedule, 0, len(hapagScheduleData))
 	for _, route := range hapagScheduleData {
-		etd := ConvertDateFormat(&route.PlaceOfReceipt.DateTime, hapagDateFormat)
-		eta := ConvertDateFormat(&route.PlaceOfDelivery.DateTime, hapagDateFormat)
+		etd := external.ConvertDateFormat(&route.PlaceOfReceipt.DateTime, hapagDateFormat)
+		eta := external.ConvertDateFormat(&route.PlaceOfDelivery.DateTime, hapagDateFormat)
 		scheduleResult := &schema.P2PSchedule{
 			Scac:          "HLCU",
 			PointFrom:     route.PlaceOfReceipt.Location.UNLocationCode,
 			PointTo:       route.PlaceOfDelivery.Location.UNLocationCode,
 			Etd:           etd,
 			Eta:           eta,
-			TransitTime:   cmp.Or(route.TransitTime, CalculateTransitTime(&etd, &eta)),
+			TransitTime:   cmp.Or(route.TransitTime, external.CalculateTransitTime(&etd, &eta)),
 			Transshipment: len(route.Legs) > 1,
 			Legs:          hsp.GenerateScheduleLeg(route.CutOffTimes, route.Legs),
 		}
@@ -138,18 +139,18 @@ func (hsp *HapagScheduleResponse) GenerateLegPoints(legDetails *hleg) *schema.Le
 }
 
 func (hsp *HapagScheduleResponse) GenerateEventDate(seq int, cutOffs []*cutOffTime, legDetails *hleg) *schema.Leg {
-	etd := ConvertDateFormat(&legDetails.Departure.DateTime, hapagDateFormat)
-	eta := ConvertDateFormat(&legDetails.Arrival.DateTime, hapagDateFormat)
+	etd := external.ConvertDateFormat(&legDetails.Departure.DateTime, hapagDateFormat)
+	eta := external.ConvertDateFormat(&legDetails.Arrival.DateTime, hapagDateFormat)
 	var cyCutoffDate, docCutoffDate, vgmCutoffDate string
 	if seq == 0 {
 		for _, cutOff := range cutOffs {
 			switch cutOff.CutOffDateTimeCode {
 			case "DCO":
-				docCutoffDate = ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
+				docCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
 			case "VCO":
-				vgmCutoffDate = ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
+				vgmCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
 			case "FCO":
-				cyCutoffDate = ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
+				cyCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
 			}
 
 		}
@@ -166,7 +167,7 @@ func (hsp *HapagScheduleResponse) GenerateEventDate(seq int, cutOffs []*cutOffTi
 	eventTime := &schema.Leg{
 		Etd:         etd,
 		Eta:         eta,
-		TransitTime: CalculateTransitTime(&etd, &eta),
+		TransitTime: external.CalculateTransitTime(&etd, &eta),
 		Cutoffs:     cf,
 	}
 

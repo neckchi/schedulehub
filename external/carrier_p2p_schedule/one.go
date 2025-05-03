@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"encoding/json"
 	"fmt"
+	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
@@ -86,8 +87,8 @@ func (osp *OneScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema
 			Scac:          schedule.Scac,
 			PointFrom:     schedule.OriginUnloc,
 			PointTo:       schedule.DestinationUnloc,
-			Etd:           ConvertDateFormat(&schedule.OriginDepartureDateEstimated, oneDateFormat),
-			Eta:           ConvertDateFormat(&schedule.DestinationArrivalDateEstimated, oneDateFormat),
+			Etd:           external.ConvertDateFormat(&schedule.OriginDepartureDateEstimated, oneDateFormat),
+			Eta:           external.ConvertDateFormat(&schedule.DestinationArrivalDateEstimated, oneDateFormat),
 			TransitTime:   int(math.Floor(tt + 0.5)),
 			Transshipment: len(schedule.Legs) > 1,
 			Legs:          osp.GenerateScheduleLeg(schedule, schedule.Legs),
@@ -173,19 +174,19 @@ func (osp *OneScheduleResponse) GenerateEventDate(schedule *OneRoute, legDetails
 	var tt int
 	switch legDetails {
 	case nil:
-		convertEtd = ConvertDateFormat(&schedule.OriginDepartureDateEstimated, oneDateFormat)
-		convertEta = ConvertDateFormat(&schedule.DestinationArrivalDateEstimated, oneDateFormat)
-		tt = CalculateTransitTime(&convertEtd, &convertEta)
+		convertEtd = external.ConvertDateFormat(&schedule.OriginDepartureDateEstimated, oneDateFormat)
+		convertEta = external.ConvertDateFormat(&schedule.DestinationArrivalDateEstimated, oneDateFormat)
+		tt = external.CalculateTransitTime(&convertEtd, &convertEta)
 
 	default:
-		convertEtd = ConvertDateFormat(&legDetails.DepartureDateEstimated, oneDateFormat)
-		convertEta = ConvertDateFormat(&legDetails.ArrivalDateEstimated, oneDateFormat)
-		tt = CalculateTransitTime(&convertEtd, &convertEta)
+		convertEtd = external.ConvertDateFormat(&legDetails.DepartureDateEstimated, oneDateFormat)
+		convertEta = external.ConvertDateFormat(&legDetails.ArrivalDateEstimated, oneDateFormat)
+		tt = external.CalculateTransitTime(&convertEtd, &convertEta)
 	}
 
-	cyCutoffDate := ConvertDateFormat(&schedule.TerminalCutoff, oneDateFormat)
-	docCutoffDate := ConvertDateFormat(&schedule.DocCutoff, oneDateFormat)
-	vgmCutoffDate := ConvertDateFormat(&schedule.VgmCutoff, oneDateFormat)
+	cyCutoffDate := external.ConvertDateFormat(&schedule.TerminalCutoff, oneDateFormat)
+	docCutoffDate := external.ConvertDateFormat(&schedule.DocCutoff, oneDateFormat)
+	vgmCutoffDate := external.ConvertDateFormat(&schedule.VgmCutoff, oneDateFormat)
 
 	var cutoffs *schema.Cutoff
 	if cyCutoffDate != "" || docCutoffDate != "" || vgmCutoffDate != "" {

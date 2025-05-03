@@ -45,6 +45,7 @@ type CarrierEnvConfig struct {
 	OneToken      *string
 	OneAuth       *string
 	CmaURL        *string
+	CmaVVURL      *string
 	CmaToken      *string
 	RedisHost     *string
 	RedisPort     *string
@@ -106,6 +107,7 @@ func (m *Manager) LoadConfig() error {
 	MscScope := m.MustGet("MSCU_SCOPE")
 	MscRsa := m.MustGet("MSCU_RSA_KEY")
 	CmaURL := m.MustGet("CMA_URL")
+	CmaVVURL := m.MustGet("CMA_VV_URL")
 	CmaToken := m.MustGet("CMA_TOKEN")
 	RedisHost := m.MustGet("REDIS_HOST")
 	RedisPort := m.MustGet("REDIS_PORT")
@@ -134,6 +136,7 @@ func (m *Manager) LoadConfig() error {
 		IqaxURL:       &IqaxURL,
 		IqaxToken:     &IqaxToken,
 		CmaURL:        &CmaURL,
+		CmaVVURL:      &CmaVVURL,
 		CmaToken:      &CmaToken,
 		OneURL:        &OneURL,
 		OneTURL:       &OneTURL,
