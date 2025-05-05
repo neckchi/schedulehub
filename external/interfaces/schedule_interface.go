@@ -93,11 +93,12 @@ func (ss *ScheduleService[T, Q]) FetchSchedule(ctx context.Context, c *httpclien
 	if headerParams.Headers != nil {
 		responseJson, err := c.Fetch(ctx, ss.ScheduleConfig.Method, &ss.ScheduleConfig.ScheduleURL, &headerParams.Params, &headerParams.Headers, ss.ScheduleConfig.Namespace, ss.ScheduleConfig.ScheduleExpiry)
 		if err != nil {
-			log.Info(err)
+			log.Error(err)
 			return nil, err
 		}
 		finalSchedule, err := ss.ScheduleProvider.GenerateSchedule(responseJson)
 		if err != nil {
+			log.Error(err)
 			return nil, err
 		}
 		return finalSchedule, nil

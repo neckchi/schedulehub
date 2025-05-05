@@ -39,7 +39,7 @@ type VesselDetails struct {
 
 type Services struct {
 	ServiceCode string `json:"serviceCode,omitempty"`
-	ServiceName string `json:"serviceName,omitempty"`
+	ServiceName string `json:"service,omitempty"`
 }
 
 type PortCalls struct {
@@ -50,7 +50,8 @@ type PortCalls struct {
 	Service      Services    `json:"service" validate:"omitempty"`
 	PortEvent    string      `json:"portEvent" validate:"required"`
 	Port         Port        `json:"port" validate:"required"`
-	EstimateDate string      `json:"estimateDate" validate:"required"`
+	EstimateDate string      `json:"estimateDate,omitempty"`
+	ActualDate   string      `json:"actualDate,omitempty"`
 }
 
 type MasterVesselSchedule struct {

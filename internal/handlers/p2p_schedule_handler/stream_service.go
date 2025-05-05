@@ -45,8 +45,8 @@ func NewScheduleStreamingService(
 	}
 }
 
-func (sss *ScheduleStreamingService) FanOutScheduleChannels() []<-chan any {
-	fanOutChannels := make([]<-chan any, 0, len(sss.queryParams.SCAC))
+func (sss *ScheduleStreamingService) FanOutScheduleChannels() []<-chan []*schema.P2PSchedule {
+	fanOutChannels := make([]<-chan []*schema.P2PSchedule, 0, len(sss.queryParams.SCAC))
 	compositeFilter := ScheduleFilters(WithDirectOnly(), WithTSP(), WithVesselIMO(), WithService())
 	for _, scac := range sss.queryParams.SCAC {
 		p2pScheduleChan := sss.ConsolidateSchedule(scac)
@@ -122,8 +122,8 @@ func (sss *ScheduleStreamingService) FilterSchedule(stream <-chan []*schema.P2PS
 }
 
 // ValidateSchedules validates the schedules and returns a channel
-func (sss *ScheduleStreamingService) ValidateSchedules(stream <-chan []*schema.P2PSchedule) <-chan any {
-	out := make(chan any)
+func (sss *ScheduleStreamingService) ValidateSchedules(stream <-chan []*schema.P2PSchedule) <-chan []*schema.P2PSchedule {
+	out := make(chan []*schema.P2PSchedule)
 	go func() {
 		defer close(out)
 		for schedule := range stream {
@@ -157,11 +157,11 @@ func (sss *ScheduleStreamingService) validSchedulesFn(schedules []*schema.P2PSch
 }
 
 // FanIn combines multiple schedule channels into one
-func (sss *ScheduleStreamingService) FanIn(channels ...<-chan any) <-chan any {
+func (sss *ScheduleStreamingService) FanIn(channels ...<-chan []*schema.P2PSchedule) <-chan []*schema.P2PSchedule {
 	var wg sync.WaitGroup
-	fannedInStream := make(chan any)
+	fannedInStream := make(chan []*schema.P2PSchedule)
 
-	transfer := func(ch <-chan any) {
+	transfer := func(ch <-chan []*schema.P2PSchedule) {
 		defer wg.Done()
 		for i := range ch {
 			select {
@@ -188,7 +188,7 @@ func (sss *ScheduleStreamingService) FanIn(channels ...<-chan any) <-chan any {
 }
 
 // StreamResponse handles the streaming of response data
-func (sss *ScheduleStreamingService) StreamResponse(w utils.FlushWriter, fannedIn <-chan any) {
+func (sss *ScheduleStreamingService) StreamResponse(w utils.FlushWriter, fannedIn <-chan []*schema.P2PSchedule) {
 	_, _ = w.Write([]byte(fmt.Sprintf(
 		`{"origin":"%s","destination":"%s","schedules":[`, sss.queryParams.PointFrom, sss.queryParams.PointTo,
 	)))
@@ -207,8 +207,7 @@ func (sss *ScheduleStreamingService) StreamResponse(w utils.FlushWriter, fannedI
 			case <-sss.ctx.Done():
 				return
 			default:
-				scheduleBatch, _ := schedules.([]*schema.P2PSchedule)
-				for _, schedule := range scheduleBatch {
+				for _, schedule := range schedules {
 					if !first {
 						_, _ = w.Write([]byte(","))
 					}

@@ -3,16 +3,17 @@ package carrier_vessel_schedule
 import (
 	"cmp"
 	"encoding/json"
+	"fmt"
 	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
+	"slices"
 	"time"
 )
 
 type CMAVesselScheduleResponse []CMAVesselSchedules
 
 type CMAVesselSchedules struct {
-	// Basic voyage information
 	ID                              string      `json:"id"`
 	Type                            string      `json:"type"`
 	Activities                      []string    `json:"activities"`
@@ -41,19 +42,16 @@ type CMAVesselSchedules struct {
 	NextVoyage                      string      `json:"nextVoyage,omitempty"`
 }
 
-// LocationCodification represents a codification entry for a location
 type CMALocationCodification struct {
 	CodificationType string `json:"codificationType"`
 	Codification     string `json:"codification"`
 }
 
-// FacilityCodification represents a codification entry for a facility
 type CMAFacilityCodification struct {
 	CodificationType string `json:"codificationType"`
 	Codification     string `json:"codification"`
 }
 
-// Facility represents facility details within a location
 type CMAFacility struct {
 	Name                  string                    `json:"name"`
 	FacilityType          string                    `json:"facilityType"`
@@ -61,7 +59,6 @@ type CMAFacility struct {
 	FacilityCodifications []CMAFacilityCodification `json:"facilityCodifications"`
 }
 
-// Location represents location details
 type CMALocation struct {
 	Name                  string                    `json:"name"`
 	InternalCode          string                    `json:"internalCode"`
@@ -70,7 +67,6 @@ type CMALocation struct {
 	Facility              CMAFacility               `json:"facility"`
 }
 
-// Point represents point information
 type CMAPoint struct {
 	Code string `json:"code"`
 	Name string `json:"name"`
@@ -103,44 +99,6 @@ type CMADateTime struct {
 	Utc   string `json:"utc"`
 }
 
-func (cvs *CMAVesselScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParamsForVesselVoyage]) interfaces.HeaderParams {
-	var calculateEndDate = func(startDate string, dateRange int) string {
-		date, _ := time.Parse("2006-01-02", startDate)
-		endDate := date.AddDate(0, 0, dateRange)
-		return endDate.Format("2006-01-02")
-	}
-
-	scheduleHeaders := map[string]string{
-		"KeyId": *p.Env.CmaToken,
-	}
-	scheduleParams := map[string]string{
-		"shipcomp":  schema.InternalCodeMapping[p.Scac],
-		"vesselIMO": p.Query.VesselIMO,
-		"from":      p.Query.StartDate,
-		"to":        calculateEndDate(p.Query.StartDate, p.Query.DateRange),
-	}
-	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
-	return headerParams
-}
-
-func (cvs *CMAVesselScheduleResponse) GenerateSchedule(responseJson []byte) (*schema.MasterVesselSchedule, error) {
-	var cmaVesselSchedules CMAVesselScheduleResponse
-	err := json.Unmarshal(responseJson, &cmaVesselSchedules)
-	if err != nil {
-		return nil, err
-	}
-	mvsResult := &schema.MasterVesselSchedule{
-		Scac:       string(schema.InternalCodeToScac[cmaVesselSchedules[0].ShippingCompany]),
-		Voyage:     cmaVesselSchedules[0].VoyageCode,
-		NextVoyage: cmaVesselSchedules[0].NextVoyage,
-		Vessel:     schema.VesselDetails{VesselName: cmaVesselSchedules[0].Vessel.Name, Imo: cmaVesselSchedules[0].Vessel.Imo},
-		Services:   schema.Services{ServiceCode: cmaVesselSchedules[0].Service.Code, ServiceName: cmaVesselSchedules[0].Service.Name},
-		Calls:      cvs.GenerateVesselCalls(cmaVesselSchedules),
-	}
-
-	return mvsResult, nil
-}
-
 var cmaEventType = map[string]string{
 	"Load":      "Loading",
 	"Discharge": "Unloading",
@@ -153,6 +111,57 @@ var cmaDirectionMapping = map[string]string{
 	"EAST":  "EBO",
 	"NORTH": "NBO",
 	"SOUTH": "SBO",
+}
+
+func (cvs *CMAVesselScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParamsForVesselVoyage]) interfaces.HeaderParams {
+	const defaultDateRange = 60
+	var calculateEndDate = func(startDate string, dateRange int) string {
+		maxDateRange := slices.Max([]int{dateRange, defaultDateRange})
+		date, _ := time.Parse("2006-01-02", startDate)
+		endDate := date.AddDate(0, 0, maxDateRange)
+		return endDate.Format("2006-01-02")
+	}
+
+	scheduleHeaders := map[string]string{
+		"KeyId": *p.Env.CmaToken,
+	}
+	scheduleParams := map[string]string{
+		"shipcomp":  schema.InternalCodeMapping[p.Scac],
+		"vesselIMO": p.Query.VesselIMO,
+	}
+
+	if p.Query.Voyage != "" {
+		scheduleParams["voyageCode"] = p.Query.Voyage
+	}
+
+	if p.Query.StartDate != "" {
+		scheduleParams["from"] = p.Query.StartDate
+		scheduleParams["to"] = calculateEndDate(p.Query.StartDate, p.Query.DateRange)
+	}
+
+	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
+	return headerParams
+}
+
+func (cvs *CMAVesselScheduleResponse) GenerateSchedule(responseJson []byte) (*schema.MasterVesselSchedule, error) {
+	var cmaVesselScheduleResponse CMAVesselScheduleResponse
+	err := json.Unmarshal(responseJson, &cmaVesselScheduleResponse)
+	if len(cmaVesselScheduleResponse) == 0 {
+		return nil, fmt.Errorf("CMA Vessel Schedule Response is empty")
+	}
+	if err != nil {
+		return nil, err
+	}
+	mvsResult := &schema.MasterVesselSchedule{
+		Scac:       string(schema.InternalCodeToScac[cmaVesselScheduleResponse[0].ShippingCompany]),
+		Voyage:     cmaVesselScheduleResponse[0].VoyageCode,
+		NextVoyage: cmaVesselScheduleResponse[0].NextVoyage,
+		Vessel:     schema.VesselDetails{VesselName: cmaVesselScheduleResponse[0].Vessel.Name, Imo: cmaVesselScheduleResponse[0].Vessel.Imo},
+		Services:   schema.Services{ServiceCode: cmaVesselScheduleResponse[0].Service.Code, ServiceName: cmaVesselScheduleResponse[0].Service.Name},
+		Calls:      cvs.GenerateVesselCalls(cmaVesselScheduleResponse),
+	}
+
+	return mvsResult, nil
 }
 
 func (cvs *CMAVesselScheduleResponse) GenerateVesselCalls(vesselCalls CMAVesselScheduleResponse) []schema.PortCalls {

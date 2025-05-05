@@ -38,6 +38,7 @@ type CarrierEnvConfig struct {
 	MscScope      *string
 	MscRsa        *string
 	HapagURL      *string
+	HapagVVURL    *string
 	HapagClient   *string
 	HapagSecret   *string
 	OneURL        *string
@@ -97,6 +98,7 @@ func (m *Manager) LoadConfig() error {
 	OneToken := m.MustGet("ONEY_TOKEN")
 	OneAuth := m.MustGet("ONEY_AUTH")
 	HapagURL := m.MustGet("HLCU_URL")
+	HapagVVURL := m.MustGet("HLCU_VV_URL")
 	HapagClient := m.MustGet("HLCU_CLIENT_ID")
 	HapagSecret := m.MustGet("HLCU_CLIENT_SECRET")
 	MscURL := m.MustGet("MSCU_URL")
@@ -143,6 +145,7 @@ func (m *Manager) LoadConfig() error {
 		OneToken:      &OneToken,
 		OneAuth:       &OneAuth,
 		HapagURL:      &HapagURL,
+		HapagVVURL:    &HapagVVURL,
 		HapagClient:   &HapagClient,
 		HapagSecret:   &HapagSecret,
 		RedisHost:     &RedisHost,

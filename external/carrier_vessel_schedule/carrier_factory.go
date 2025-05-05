@@ -86,6 +86,15 @@ func NewVesselScheduleServiceFactory(e *env.Manager) *VesselScheduleServiceFacto
 				RequiresAuth:  false,
 				BaseSchema:    &CMAVesselScheduleResponse{},
 			},
+			schema.HLCU: {
+				Name:          "HAPAG",
+				BaseURL:       *e.HapagVVURL,
+				Method:        http.MethodGet,
+				CacheDuration: 6 * time.Hour,
+				CacheKey:      "hapag schedule",
+				RequiresAuth:  false,
+				BaseSchema:    &HapagVesselScheduleResponse{},
+			},
 
 			// Add more carriers  here
 		},

@@ -3,13 +3,14 @@ package carrier_vessel_schedule
 import (
 	"cmp"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 )
 
 type MaerskVesselSchedule struct {
-	Vessel      MaerskVessel       `json:"vessel"`
+	Vessel      *MaerskVessel      `json:"vessel"`
 	VesselCalls []MaerskVesselCall `json:"vesselCalls"`
 }
 
@@ -100,6 +101,9 @@ func (mvs *MaerskVesselSchedule) GenerateSchedule(responseJson []byte) (*schema.
 	if err != nil {
 		return nil, err
 	}
+	if maerskVesselSchedule.Vessel == nil || len(maerskVesselSchedule.VesselCalls) == 0 {
+		return nil, errors.New("MaerskVesselScheduleResponse is empty")
+	}
 	imo = maerskVesselSchedule.Vessel.VesselIMONumber
 	mvsResult := &schema.MasterVesselSchedule{
 		Scac:     string(scac),
@@ -125,12 +129,25 @@ func (mvs *MaerskVesselSchedule) GenerateVesselCalls(vesselCalls []MaerskVesselC
 
 			if call.TransportEventTypeCode == "ARRI" {
 				inboundService := portCalls.Transport.InboundService
-				return inboundService.CarrierVoyageNumber, cmp.Or(voyageDirection[inboundService.CarrierVoyageNumber[len(inboundService.CarrierVoyageNumber)-1:]], "UNK"), inboundService.CarrierServiceName
+				return inboundService.CarrierVoyageNumber,
+					cmp.Or(voyageDirection[inboundService.CarrierVoyageNumber[len(inboundService.CarrierVoyageNumber)-1:]], "UNK"),
+					inboundService.CarrierServiceName
 			}
 			outboundService := portCalls.Transport.OutboundService
-			return outboundService.CarrierVoyageNumber, cmp.Or(voyageDirection[outboundService.CarrierVoyageNumber[len(outboundService.CarrierVoyageNumber)-1:]], "UNK"), outboundService.CarrierServiceName
+			return outboundService.CarrierVoyageNumber,
+				cmp.Or(voyageDirection[outboundService.CarrierVoyageNumber[len(outboundService.CarrierVoyageNumber)-1:]], "UNK"),
+				outboundService.CarrierServiceName
 		}
 		for _, scheduleCalls := range portCalls.CallSchedules {
+			var getEventDate = func(eventDateType string) string {
+				switch scheduleCalls.EventClassifierCode == eventDateType {
+				case true:
+					return scheduleCalls.ClassifierDateTime
+				default:
+					return ""
+				}
+			}
+
 			countPortCall += 1
 			voyageNum, voyageDirection, serviceCode := getVoyageNumberAndDirection(scheduleCalls)
 			portCallsResult := schema.PortCalls{
@@ -141,7 +158,8 @@ func (mvs *MaerskVesselSchedule) GenerateVesselCalls(vesselCalls []MaerskVesselC
 				PortEvent:    maeuEventType[scheduleCalls.TransportEventTypeCode],
 				Service:      schema.Services{ServiceCode: serviceCode},
 				Port:         schema.Port{PortCode: portCalls.Facility.UNLocationCode, PortName: portCalls.Facility.PortName},
-				EstimateDate: scheduleCalls.ClassifierDateTime,
+				EstimateDate: getEventDate("EST"),
+				ActualDate:   getEventDate("ACT"),
 			}
 			maerskPortCalls = append(maerskPortCalls, portCallsResult)
 		}

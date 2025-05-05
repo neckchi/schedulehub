@@ -27,3 +27,4 @@ service.registry.mvs:
     APLU: true
     MAEU: true
     MAEI: true
+    HLCU: true
