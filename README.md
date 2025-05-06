@@ -20,6 +20,7 @@
     │   ├── token_interface.go                # token configuration
     ├── carrier_vessel_schedule/              # external carrier vessel schedule mapping
     │   │─── carriers_factory.go              # Factory for carrier interfaces
+    │   │─── hapag(dcsa).go                   # Hapag-Lloyd carrier bizlogic
     │   │─── maersk.go                        # Maersk carrier biz logic
     │   │─── cma.go                           # CMA carrier logic
     ├── carrier_p2p_schedule/                 # external carrier p2p schedule mapping
