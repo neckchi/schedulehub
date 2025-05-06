@@ -75,6 +75,7 @@ func (mvs *MasterVesselSchedule) ConsolidateMasterVesselSchedule(scac schema.Car
 }
 
 func (mvs *MasterVesselSchedule) FetchMasterVesselSchedule(scac schema.CarrierCode) *schema.MasterVesselSchedule {
+	// Query Carrier API
 	if active, ok := mvs.scheduleConfig[string(scac)].(bool); active && ok {
 		service, err := mvs.vv.CreateVesselScheduleService(scac)
 		if err != nil {
@@ -84,7 +85,8 @@ func (mvs *MasterVesselSchedule) FetchMasterVesselSchedule(scac schema.CarrierCo
 		masterVesselSchedule, _ := service.FetchSchedule(mvs.ctx, mvs.client, mvs.env, mvs.queryParams, scac)
 		return masterVesselSchedule
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
+	//Query Vessel Schedule database
+	ctx, cancel := context.WithTimeout(mvs.ctx, 7*time.Second)
 	defer cancel()
 	sqlResults, err := mvs.db.QueryContext(ctx, scac, *mvs.queryParams)
 	if err != nil {
