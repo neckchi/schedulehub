@@ -81,7 +81,7 @@ func (mvs *MasterVesselSchedule) FetchMasterVesselSchedule(scac schema.CarrierCo
 			log.Errorf("Failed to create schedule service: %s", err)
 			return nil
 		}
-		masterVesselSchedule, _ := service.FetchSchedule(context.Background(), mvs.client, mvs.env, mvs.queryParams, scac)
+		masterVesselSchedule, _ := service.FetchSchedule(mvs.ctx, mvs.client, mvs.env, mvs.queryParams, scac)
 		return masterVesselSchedule
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
@@ -283,13 +283,13 @@ func constructPortCalls(sqlResults []schema.ScheduleRow, overlappedPorts map[gro
 			voyageValue = port.VoyageNum
 		}
 		portCall := schema.PortCalls{
-			Key:          uniqueKeyVals,
-			Bound:        boundValue,
-			Voyage:       voyageValue,
-			Service:      schema.Services{ServiceCode: sqlResults[0].ServiceCode},
-			PortEvent:    schema.EventType[port.PortEvent],
-			Port:         schema.Port{PortName: port.PortName, PortCode: port.PortCode},
-			EstimateDate: port.EventTime,
+			Key:                uniqueKeyVals,
+			Bound:              boundValue,
+			Voyage:             voyageValue,
+			Service:            schema.Services{ServiceCode: sqlResults[0].ServiceCode},
+			PortEvent:          schema.EventType[port.PortEvent],
+			Port:               schema.Port{PortName: port.PortName, PortCode: port.PortCode},
+			EstimatedEventDate: port.EventTime,
 		}
 		portOfCalls = append(portOfCalls, portCall)
 	}

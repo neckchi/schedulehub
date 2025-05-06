@@ -70,7 +70,7 @@ func sortAndRemoveDuplicates(portCalls []schema.PortCalls) []schema.PortCalls {
 	var countPortCall int
 	slices.SortFunc(portCalls, func(a, b schema.PortCalls) int {
 		return cmp.Or(
-			cmp.Compare(a.EstimateDate, b.EstimateDate),
+			cmp.Compare(a.EstimatedEventDate, b.EstimatedEventDate),
 		)
 	})
 	type uniqueKey struct {
@@ -82,7 +82,7 @@ func sortAndRemoveDuplicates(portCalls []schema.PortCalls) []schema.PortCalls {
 
 	for _, item := range portCalls {
 
-		unique := uniqueKey{item.Port.PortCode, item.EstimateDate}
+		unique := uniqueKey{item.Port.PortCode, item.EstimatedEventDate}
 		seen[unique]++
 		if seen[unique] <= 1 {
 			countPortCall += 1
@@ -194,10 +194,11 @@ func (hvs *HapagVesselScheduleResponse) GenerateVesselCalls(vesselSchedules Hapa
 							PortEvent: pe.eventType,
 							Service:   schema.Services{ServiceCode: vesselSchedule.CarrierServiceCode, ServiceName: vesselSchedule.CarrierServiceName},
 							Port: schema.Port{
-								PortCode: portCalls.Location.UNLocationCode,
+								PortCode:     portCalls.Location.UNLocationCode,
+								TerminalCode: portCalls.Location.FacilitySMDGCode,
 							},
-							EstimateDate: getEstimatedEventDate(pe.eventType),
-							ActualDate:   getActualEventDate(pe.eventType),
+							EstimatedEventDate: getEstimatedEventDate(pe.eventType),
+							ActualEventDate:    getActualEventDate(pe.eventType),
 						}
 						hapagPortCalls = append(hapagPortCalls, portCallsResult)
 					}

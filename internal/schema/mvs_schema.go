@@ -28,8 +28,10 @@ var EventType = map[string]string{
 }
 
 type Port struct {
-	PortName string `json:"portName,omitempty"`
-	PortCode string `json:"portCode" validate:"required,portCodeValidation"`
+	PortName     string `json:"portName,omitempty"`
+	PortCode     string `json:"portCode" validate:"required,portCodeValidation"`
+	TerminalName string `json:"terminalName,omitempty" validate:"omitempty"`
+	TerminalCode string `json:"terminalCode,omitempty" validate:"omitempty"`
 }
 
 type VesselDetails struct {
@@ -43,15 +45,15 @@ type Services struct {
 }
 
 type PortCalls struct {
-	Seq          int         `json:"seq" validate:"required"`
-	Key          interface{} `json:"key" validate:"required"`
-	Bound        interface{} `json:"bound" validate:"required"`
-	Voyage       interface{} `json:"voyage" validate:"required"`
-	Service      Services    `json:"service" validate:"omitempty"`
-	PortEvent    string      `json:"portEvent" validate:"required"`
-	Port         Port        `json:"port" validate:"required"`
-	EstimateDate string      `json:"estimateDate,omitempty"`
-	ActualDate   string      `json:"actualDate,omitempty"`
+	Seq                int         `json:"seq" validate:"required"`
+	Key                interface{} `json:"key" validate:"required"`
+	Bound              interface{} `json:"bound" validate:"required"`
+	Voyage             interface{} `json:"voyage" validate:"required"`
+	Service            Services    `json:"service" validate:"omitempty"`
+	PortEvent          string      `json:"portEvent" validate:"required"`
+	Port               Port        `json:"port" validate:"required"`
+	EstimatedEventDate string      `json:"estimatedEventDate,omitempty"`
+	ActualEventDate    string      `json:"actualEventDate,omitempty"`
 }
 
 type MasterVesselSchedule struct {

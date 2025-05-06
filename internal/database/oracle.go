@@ -165,7 +165,7 @@ func (p *OracleDBConnectionPool) QueryContext(ctx context.Context, scac schema.C
 	}
 
 	if exist := len(scheduleRows); exist < 1 {
-		return nil, fmt.Errorf("No Master Vessel Scheudle For scac:%s,vesselIMO:%s", scac, queryParams.VesselIMO)
+		return nil, fmt.Errorf("No Master Vessel Scheudle For scac:%s,vesselIMO:%s %.3fs", scac, queryParams.VesselIMO, time.Since(startTime).Seconds())
 	}
 	slices.SortFunc(scheduleRows, func(a, b schema.ScheduleRow) int {
 		return cmp.Or(

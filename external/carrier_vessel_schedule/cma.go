@@ -185,10 +185,12 @@ func (cvs *CMAVesselScheduleResponse) GenerateVesselCalls(vesselCalls CMAVesselS
 				PortEvent: cmaEventType[activity],
 				Service:   schema.Services{ServiceCode: portCalls.Service.Code, ServiceName: portCalls.Service.Name},
 				Port: schema.Port{
-					PortCode: cmp.Or(portCalls.Location.InternalCode, portCalls.Location.LocationCodifications[0].Codification),
-					PortName: portCalls.Location.Name,
+					PortCode:     cmp.Or(portCalls.Location.InternalCode, portCalls.Location.LocationCodifications[0].Codification),
+					PortName:     portCalls.Location.Name,
+					TerminalName: portCalls.Location.Facility.Name,
+					TerminalCode: cmp.Or(portCalls.Location.Facility.FacilityCodifications[0].Codification, portCalls.Location.Facility.InternalCode),
 				},
-				EstimateDate: getEventDateTime(activity),
+				EstimatedEventDate: getEventDateTime(activity),
 			}
 			cmaPortCalls = append(cmaPortCalls, portCallsResult)
 		}

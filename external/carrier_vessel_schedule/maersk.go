@@ -151,15 +151,19 @@ func (mvs *MaerskVesselSchedule) GenerateVesselCalls(vesselCalls []MaerskVesselC
 			countPortCall += 1
 			voyageNum, voyageDirection, serviceCode := getVoyageNumberAndDirection(scheduleCalls)
 			portCallsResult := schema.PortCalls{
-				Seq:          countPortCall,
-				Key:          imo + voyageNum + serviceCode,
-				Bound:        voyageDirection,
-				Voyage:       voyageNum,
-				PortEvent:    maeuEventType[scheduleCalls.TransportEventTypeCode],
-				Service:      schema.Services{ServiceCode: serviceCode},
-				Port:         schema.Port{PortCode: portCalls.Facility.UNLocationCode, PortName: portCalls.Facility.PortName},
-				EstimateDate: getEventDate("EST"),
-				ActualDate:   getEventDate("ACT"),
+				Seq:       countPortCall,
+				Key:       imo + voyageNum + serviceCode,
+				Bound:     voyageDirection,
+				Voyage:    voyageNum,
+				PortEvent: maeuEventType[scheduleCalls.TransportEventTypeCode],
+				Service:   schema.Services{ServiceCode: serviceCode},
+				Port: schema.Port{
+					PortCode:     portCalls.Facility.UNLocationCode,
+					PortName:     portCalls.Facility.PortName,
+					TerminalName: portCalls.Facility.LocationName,
+					TerminalCode: portCalls.Facility.CarrierTerminalCode},
+				EstimatedEventDate: getEventDate("EST"),
+				ActualEventDate:    getEventDate("ACT"),
 			}
 			maerskPortCalls = append(maerskPortCalls, portCallsResult)
 		}
