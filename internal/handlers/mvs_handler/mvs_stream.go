@@ -17,6 +17,7 @@ import (
 )
 
 type MasterVesselSchedule struct {
+	ctx            context.Context
 	db             database.OracleRepository
 	done           <-chan int
 	client         *httpclient.HttpClient
@@ -28,6 +29,7 @@ type MasterVesselSchedule struct {
 
 // NewScheduleService creates a new instance of ScheduleService
 func NewMastervVesselVoyageService(
+	ctx context.Context,
 	db database.OracleRepository,
 	done <-chan int,
 	client *httpclient.HttpClient,
@@ -36,6 +38,7 @@ func NewMastervVesselVoyageService(
 	queryParams *schema.QueryParamsForVesselVoyage,
 	scheduleConfig map[string]any) *MasterVesselSchedule {
 	return &MasterVesselSchedule{
+		ctx:            ctx,
 		db:             db,
 		done:           done,
 		client:         client,
@@ -61,6 +64,8 @@ func (mvs *MasterVesselSchedule) ConsolidateMasterVesselSchedule(scac schema.Car
 	go func() {
 		defer close(stream)
 		select {
+		case <-mvs.ctx.Done():
+			return
 		case <-mvs.done:
 			return
 		case stream <- mvs.FetchMasterVesselSchedule(scac):
@@ -103,6 +108,8 @@ func (mvs *MasterVesselSchedule) ValidateMasterVesselSchedules(stream <-chan *sc
 		for schedule := range stream {
 			if mvs.validMasterVesselSchedulesFn(schedule) {
 				select {
+				case <-mvs.ctx.Done():
+					return
 				case <-mvs.done:
 					return
 				case out <- schedule:
@@ -133,6 +140,8 @@ func (mvs *MasterVesselSchedule) FanInMasterVesselSchedule(channels ...<-chan *s
 		defer wg.Done()
 		for i := range ch {
 			select {
+			case <-mvs.ctx.Done():
+				return
 			case <-mvs.done:
 				return
 			case fannedInStream <- i:
@@ -167,6 +176,8 @@ func (mvs *MasterVesselSchedule) StreamMasterVesselSchedule(w utils.FlushWriter,
 		defer close(doneProcessing)
 		for schedules := range fannedIn {
 			select {
+			case <-mvs.ctx.Done():
+				return
 			case <-mvs.done:
 				return
 			default:

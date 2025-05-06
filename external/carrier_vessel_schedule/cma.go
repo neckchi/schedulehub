@@ -171,11 +171,11 @@ func (cvs *CMAVesselScheduleResponse) GenerateVesselCalls(vesselCalls CMAVesselS
 	for _, portCalls := range vesselCalls {
 		var getEventDateTime = func(eventType string) string {
 			if eventType == "Load" {
-				return external.ConvertDateFormat(&portCalls.BerthDate.Utc, cmaDateFormat)
+				return external.ConvertDateFormat(&portCalls.UnberthDate.Utc, cmaDateFormat)
 			}
-			return external.ConvertDateFormat(&portCalls.UnberthDate.Utc, cmaDateFormat)
+			return external.ConvertDateFormat(&portCalls.BerthDate.Utc, cmaDateFormat)
 		}
-		for _, activity := range portCalls.Activities {
+		for _, activity := range slices.Backward(portCalls.Activities) {
 			countPortCall += 1
 			portCallsResult := schema.PortCalls{
 				Seq:       countPortCall,
