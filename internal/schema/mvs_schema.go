@@ -70,7 +70,7 @@ type PortCalls struct {
 	Bound              interface{} `json:"bound" validate:"required"`
 	Voyage             interface{} `json:"voyage" validate:"required"`
 	Service            *Services   `json:"service" validate:"omitempty"`
-	PortEvent          string      `json:"portEvent" validate:"required,oneof=Loading Unloading"`
+	PortEvent          string      `json:"portEvent" validate:"required,oneof=Loading Unloading Pass"`
 	Port               *Port       `json:"port" validate:"omitempty"`
 	EstimatedEventDate string      `json:"estimatedEventDate,omitempty" validate:"omitempty,isValidDate"`
 	ActualEventDate    string      `json:"actualEventDate,omitempty" validate:"omitempty,isValidDate"`
