@@ -108,7 +108,7 @@ func (mvs *MasterVesselSchedule) ValidateMasterVesselSchedules(stream <-chan *sc
 	go func() {
 		defer close(out)
 		for schedule := range stream {
-			if mvs.validMasterVesselSchedulesFn(schedule) {
+			if schedule != nil && mvs.validMasterVesselSchedulesFn(schedule) {
 				select {
 				case <-mvs.ctx.Done():
 					return
