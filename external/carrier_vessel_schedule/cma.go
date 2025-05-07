@@ -156,8 +156,8 @@ func (cvs *CMAVesselScheduleResponse) GenerateSchedule(responseJson []byte) (*sc
 		Scac:       string(schema.InternalCodeToScac[cmaVesselScheduleResponse[0].ShippingCompany]),
 		Voyage:     cmaVesselScheduleResponse[0].VoyageCode,
 		NextVoyage: cmaVesselScheduleResponse[0].NextVoyage,
-		Vessel:     schema.VesselDetails{VesselName: cmaVesselScheduleResponse[0].Vessel.Name, Imo: cmaVesselScheduleResponse[0].Vessel.Imo},
-		Services:   schema.Services{ServiceCode: cmaVesselScheduleResponse[0].Service.Code, ServiceName: cmaVesselScheduleResponse[0].Service.Name},
+		Vessel:     &schema.VesselDetails{VesselName: cmaVesselScheduleResponse[0].Vessel.Name, Imo: cmaVesselScheduleResponse[0].Vessel.Imo},
+		Services:   &schema.Services{ServiceCode: cmaVesselScheduleResponse[0].Service.Code, ServiceName: cmaVesselScheduleResponse[0].Service.Name},
 		Calls:      cvs.GenerateVesselCalls(cmaVesselScheduleResponse),
 	}
 
@@ -183,8 +183,8 @@ func (cvs *CMAVesselScheduleResponse) GenerateVesselCalls(vesselCalls CMAVesselS
 				Bound:     cmp.Or(cmaDirectionMapping[portCalls.Bound], "UNK"),
 				Voyage:    portCalls.VoyageCode,
 				PortEvent: cmaEventType[activity],
-				Service:   schema.Services{ServiceCode: portCalls.Service.Code, ServiceName: portCalls.Service.Name},
-				Port: schema.Port{
+				Service:   &schema.Services{ServiceCode: portCalls.Service.Code, ServiceName: portCalls.Service.Name},
+				Port: &schema.Port{
 					PortCode:     cmp.Or(portCalls.Location.InternalCode, portCalls.Location.LocationCodifications[0].Codification),
 					PortName:     portCalls.Location.Name,
 					TerminalName: portCalls.Location.Facility.Name,

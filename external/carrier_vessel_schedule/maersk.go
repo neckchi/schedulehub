@@ -108,8 +108,8 @@ func (mvs *MaerskVesselSchedule) GenerateSchedule(responseJson []byte) (*schema.
 	mvsResult := &schema.MasterVesselSchedule{
 		Scac:     string(scac),
 		Voyage:   maerskVesselSchedule.VesselCalls[0].Transport.InboundService.CarrierVoyageNumber,
-		Vessel:   schema.VesselDetails{VesselName: maerskVesselSchedule.Vessel.VesselName, Imo: imo},
-		Services: schema.Services{ServiceCode: maerskVesselSchedule.VesselCalls[0].Transport.InboundService.CarrierServiceName},
+		Vessel:   &schema.VesselDetails{VesselName: maerskVesselSchedule.Vessel.VesselName, Imo: imo},
+		Services: &schema.Services{ServiceCode: maerskVesselSchedule.VesselCalls[0].Transport.InboundService.CarrierServiceName},
 		Calls:    mvs.GenerateVesselCalls(maerskVesselSchedule.VesselCalls),
 	}
 	return mvsResult, nil
@@ -156,8 +156,8 @@ func (mvs *MaerskVesselSchedule) GenerateVesselCalls(vesselCalls []MaerskVesselC
 				Bound:     voyageDirection,
 				Voyage:    voyageNum,
 				PortEvent: maeuEventType[scheduleCalls.TransportEventTypeCode],
-				Service:   schema.Services{ServiceCode: serviceCode},
-				Port: schema.Port{
+				Service:   &schema.Services{ServiceCode: serviceCode},
+				Port: &schema.Port{
 					PortCode:     portCalls.Facility.UNLocationCode,
 					PortName:     portCalls.Facility.PortName,
 					TerminalName: portCalls.Facility.LocationName,

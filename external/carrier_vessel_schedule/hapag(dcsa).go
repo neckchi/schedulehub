@@ -133,10 +133,10 @@ func (hvs *HapagVesselScheduleResponse) GenerateSchedule(responseJson []byte) (*
 		Voyage: cmp.Or(
 			hapagVesselScheduleResponse[0].VesselSchedules[0].TransportCalls[0].CarrierImportVoyageNumber,
 			hapagVesselScheduleResponse[0].VesselSchedules[0].TransportCalls[0].CarrierExportVoyageNumber),
-		Vessel: schema.VesselDetails{
+		Vessel: &schema.VesselDetails{
 			VesselName: hapagVesselScheduleResponse[0].VesselSchedules[0].VesselName,
 			Imo:        hapagVesselScheduleResponse[0].VesselSchedules[0].VesselIMONumber},
-		Services: schema.Services{
+		Services: &schema.Services{
 			ServiceCode: hapagVesselScheduleResponse[0].CarrierServiceCode,
 			ServiceName: hapagVesselScheduleResponse[0].CarrierServiceName},
 		Calls: hvs.GenerateVesselCalls(hapagVesselScheduleResponse),
@@ -192,8 +192,8 @@ func (hvs *HapagVesselScheduleResponse) GenerateVesselCalls(vesselSchedules Hapa
 							Bound:     cmp.Or(hapagVoyageDirection[pe.eventVoyageNumber[len(pe.eventVoyageNumber)-1:]], "UNK"),
 							Voyage:    pe.eventVoyageNumber,
 							PortEvent: pe.eventType,
-							Service:   schema.Services{ServiceCode: vesselSchedule.CarrierServiceCode, ServiceName: vesselSchedule.CarrierServiceName},
-							Port: schema.Port{
+							Service:   &schema.Services{ServiceCode: vesselSchedule.CarrierServiceCode, ServiceName: vesselSchedule.CarrierServiceName},
+							Port: &schema.Port{
 								PortCode:     portCalls.Location.UNLocationCode,
 								TerminalCode: portCalls.Location.FacilitySMDGCode,
 							},

@@ -275,8 +275,8 @@ func (isp *IqaxScheduleResponse) GenerateLegPoints(legResponse *IqaxLeg) *schema
 	}
 
 	portPairs := &schema.Leg{
-		PointFrom: pointFrom,
-		PointTo:   pointTo,
+		PointFrom: &pointFrom,
+		PointTo:   &pointTo,
 	}
 	return portPairs
 }

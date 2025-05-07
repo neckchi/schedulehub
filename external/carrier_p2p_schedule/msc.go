@@ -158,8 +158,8 @@ func (msp *MscScheduleResponse) GenerateLegPoints(legDetails *MscSchedule) *sche
 	}
 
 	portPairs := &schema.Leg{
-		PointFrom: pointFrom,
-		PointTo:   pointTo,
+		PointFrom: &pointFrom,
+		PointTo:   &pointTo,
 	}
 	return portPairs
 }

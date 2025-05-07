@@ -75,7 +75,7 @@ func (mvs *MasterVesselSchedule) ConsolidateMasterVesselSchedule(scac schema.Car
 }
 
 func (mvs *MasterVesselSchedule) FetchMasterVesselSchedule(scac schema.CarrierCode) *schema.MasterVesselSchedule {
-	// Query Carrier API
+	//Query carrier API
 	if active, ok := mvs.scheduleConfig[string(scac)].(bool); active && ok {
 		service, err := mvs.vv.CreateVesselScheduleService(scac)
 		if err != nil {
@@ -85,7 +85,7 @@ func (mvs *MasterVesselSchedule) FetchMasterVesselSchedule(scac schema.CarrierCo
 		masterVesselSchedule, _ := service.FetchSchedule(mvs.ctx, mvs.client, mvs.env, mvs.queryParams, scac)
 		return masterVesselSchedule
 	}
-	//Query Vessel Schedule database
+	//Query database
 	ctx, cancel := context.WithTimeout(mvs.ctx, 7*time.Second)
 	defer cancel()
 	sqlResults, err := mvs.db.QueryContext(ctx, scac, *mvs.queryParams)
@@ -128,6 +128,7 @@ func (mvs *MasterVesselSchedule) validMasterVesselSchedulesFn(schedules *schema.
 			log.Errorf("%+v\n", validationErrors.Error())
 			return false
 		}
+		log.Error(err)
 		return false
 	}
 	return true
@@ -288,9 +289,9 @@ func constructPortCalls(sqlResults []schema.ScheduleRow, overlappedPorts map[gro
 			Key:                uniqueKeyVals,
 			Bound:              boundValue,
 			Voyage:             voyageValue,
-			Service:            schema.Services{ServiceCode: sqlResults[0].ServiceCode},
+			Service:            &schema.Services{ServiceCode: sqlResults[0].ServiceCode},
 			PortEvent:          schema.EventType[port.PortEvent],
-			Port:               schema.Port{PortName: port.PortName, PortCode: port.PortCode},
+			Port:               &schema.Port{PortName: port.PortName, PortCode: port.PortCode},
 			EstimatedEventDate: port.EventTime,
 		}
 		portOfCalls = append(portOfCalls, portCall)
@@ -329,11 +330,11 @@ func constructAPIResult(sqlResults []schema.ScheduleRow, finalCalls []schema.Por
 		Scac:       sqlResults[0].SCAC,
 		Voyage:     sqlResults[0].VoyageNum,
 		NextVoyage: nextVoyage,
-		Vessel: schema.VesselDetails{
+		Vessel: &schema.VesselDetails{
 			VesselName: sqlResults[0].VesselName,
 			Imo:        sqlResults[0].VesselIMO,
 		},
-		Services: schema.Services{
+		Services: &schema.Services{
 			ServiceCode: sqlResults[0].ServiceCode,
 		},
 		Calls: finalCalls,

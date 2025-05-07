@@ -11,7 +11,7 @@ WITH CapStartTimeFromFirstVV AS ( -- Each CTE operation depenedent on one anothe
       AND SUBSTR(VV.DATA_SOURCE, 1, 3) NOT IN ('P44', 'OCE') -- Exclude non-direct carrier vessel voyages
       AND SC.CODE = :scac
       AND V.LLOYDS_CODE = :imo
-      AND (:startDate IS NULL OR VVPT.TIME BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') - :dateRange
+      AND (:startDate IS NULL OR VVPT.TIME BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD')
       AND TO_DATE(:startDate, 'YYYY-MM-DD') + :dateRange)
     ORDER BY VV.UPDATE_TIME DESC, VV.START_TIME ASC
         FETCH FIRST 1 ROWS ONLY

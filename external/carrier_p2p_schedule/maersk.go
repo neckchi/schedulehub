@@ -156,8 +156,8 @@ func (maeusp *MaerskScheduleResponse) GenerateLegPoints(legDetails *TransportLeg
 	}
 
 	portPairs := &schema.Leg{
-		PointFrom: pointFrom,
-		PointTo:   pointTo,
+		PointFrom: &pointFrom,
+		PointTo:   &pointTo,
 	}
 	return portPairs
 }

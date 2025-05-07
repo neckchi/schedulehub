@@ -163,8 +163,8 @@ func (osp *OneScheduleResponse) GenerateLegPoints(schedule *OneRoute, legDetails
 	}
 
 	portPairs := &schema.Leg{
-		PointFrom: pointFrom,
-		PointTo:   pointTo,
+		PointFrom: &pointFrom,
+		PointTo:   &pointTo,
 	}
 	return portPairs
 }

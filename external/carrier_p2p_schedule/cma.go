@@ -201,8 +201,8 @@ func (csp *CmaScheduleResponse) GenerateLegPoints(legDetails *RoutingDetail) *sc
 	}
 
 	portPairs := &schema.Leg{
-		PointFrom: pointFrom,
-		PointTo:   pointTo,
+		PointFrom: &pointFrom,
+		PointTo:   &pointTo,
 	}
 	return portPairs
 }

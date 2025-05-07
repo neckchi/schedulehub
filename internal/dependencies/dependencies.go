@@ -64,7 +64,7 @@ func NewDependencies() (*Dependencies, error) {
 			Port:        envManager.Port,
 			ServiceName: envManager.ServiceName,
 		}
-		oracle, err := database.NewOracleDBConnectionPool(oracleSetting, 100, 3)
+		oracle, err := database.NewOracleDBConnectionPool(oracleSetting, 20, 3)
 		if err != nil {
 			initErr = err
 			return

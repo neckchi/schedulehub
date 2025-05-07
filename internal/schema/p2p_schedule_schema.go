@@ -38,10 +38,10 @@ func init() {
 }
 
 type PointBase struct {
-	LocationName string `json:"locationName,omitempty" validate:"omitempty"`
+	LocationName string `json:"locationName,omitempty"`
 	LocationCode string `json:"locationCode" validate:"required,portCodeValidation" description:"Location Code"`
-	TerminalName string `json:"terminalName,omitempty" validate:"omitempty"`
-	TerminalCode string `json:"terminalCode,omitempty" validate:"omitempty"`
+	TerminalName string `json:"terminalName,omitempty"`
+	TerminalCode string `json:"terminalCode,omitempty"`
 }
 
 type Cutoff struct {
@@ -78,7 +78,7 @@ var referenceMapping = map[TransportType]string{
 }
 
 type Transportation struct {
-	TransportType TransportType `json:"transportType" validate:"required"`
+	TransportType TransportType `json:"transportType,required" validate:"required"`
 	TransportName string        `json:"transportName,omitempty"`
 	ReferenceType string        `json:"referenceType,omitempty"`
 	Reference     string        `json:"reference,omitempty"`
@@ -119,15 +119,15 @@ type Service struct {
 }
 
 type Leg struct {
-	PointFrom       PointBase      `json:"pointFrom" validate:"required"`
-	PointTo         PointBase      `json:"pointTo" validate:"required"`
+	PointFrom       *PointBase     `json:"pointFrom" validate:"omitempty"`
+	PointTo         *PointBase     `json:"pointTo" validate:"omitempty"`
 	Etd             string         `json:"etd" validate:"required,isValidDate"`
 	Eta             string         `json:"eta" validate:"required,isValidDate"`
 	TransitTime     int            `json:"transitTime" validate:"gte=0"`
-	Cutoffs         *Cutoff        `json:"cutoffs,omitempty"`
+	Cutoffs         *Cutoff        `json:"cutoffs,omitempty" validate:"omitempty"`
 	Transportations Transportation `json:"transportations"`
-	Voyages         *Voyage        `json:"voyages" validate:"required"`
-	Services        *Service       `json:"services,omitempty"`
+	Voyages         *Voyage        `json:"voyages" validate:"omitempty"`
+	Services        *Service       `json:"services,omitempty" validate:"omitempty"`
 }
 
 func LegEventDateValidation(sl validator.StructLevel) {
@@ -151,7 +151,7 @@ type P2PSchedule struct {
 	Eta           string `json:"eta" validate:"required,isValidDate"`
 	TransitTime   int    `json:"transitTime" validate:"gte=0"`
 	Transshipment bool   `json:"transshipment"`
-	Legs          []*Leg `json:"legs" validate:"required,dive,required"`
+	Legs          []*Leg `json:"legs" validate:"required,dive"`
 }
 
 func ScheduleEventDateValidation(sl validator.StructLevel) {

@@ -132,8 +132,8 @@ func (hsp *HapagScheduleResponse) GenerateLegPoints(legDetails *hleg) *schema.Le
 	}
 
 	portPairs := &schema.Leg{
-		PointFrom: pointFrom,
-		PointTo:   pointTo,
+		PointFrom: &pointFrom,
+		PointTo:   &pointTo,
 	}
 	return portPairs
 }

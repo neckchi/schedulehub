@@ -104,8 +104,8 @@ func (zs *ZimScheduleResponse) GenerateLegPoints(legDetails *zleg) *schema.Leg {
 	}
 
 	portPairs := &schema.Leg{
-		PointFrom: pointFrom,
-		PointTo:   pointTo,
+		PointFrom: &pointFrom,
+		PointTo:   &pointTo,
 	}
 	return portPairs
 }

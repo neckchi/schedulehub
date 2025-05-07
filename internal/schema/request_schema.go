@@ -42,6 +42,15 @@ func init() {
 		return
 	}
 
+	errIMO := RequestValidate.RegisterValidation("isValidIMO", func(fl validator.FieldLevel) bool {
+		regex := regexp.MustCompile(`^[0-9]{7}$`)
+		value := fl.Field().String()
+		return regex.MatchString(value)
+	})
+	if errIMO != nil {
+		return
+	}
+
 }
 
 // Define the struct with field validations using Go tags
@@ -60,7 +69,7 @@ type QueryParams struct {
 
 type QueryParamsForVesselVoyage struct {
 	SCAC      []CarrierCode `json:"scac" validate:"required" example:"MSC,CMA"`
-	VesselIMO string        `json:"vesselIMO" validate:"required,max=7" description:"vessel IMO lloyds code"`
+	VesselIMO string        `json:"vesselIMO" validate:"required,isValidIMO" description:"vessel IMO lloyds code"`
 	StartDate string        `json:"startDate" validate:"omitempty,isValidDate" description:"YYYY-MM-DD"`
 	DateRange int           `json:"dateRange" validate:"required_with=StartDate,gte=0" description:"Date Tolerance"`
 	Voyage    string        `json:"voyageNum"  validate:"omitempty" description:"Voyage Number"`

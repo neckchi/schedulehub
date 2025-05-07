@@ -3,12 +3,32 @@ package schema
 import (
 	"github.com/go-playground/validator/v10"
 	"regexp"
+	"time"
 )
 
 var MVSResponseValidate *validator.Validate
 
 func init() {
 	MVSResponseValidate = validator.New(validator.WithRequiredStructEnabled())
+	// Function to validate if a string is in ISO8601 format
+	errDate := MVSResponseValidate.RegisterValidation("isValidDate", func(fl validator.FieldLevel) bool {
+		const layout1 = "2006-01-02T15:04:05"
+		value := fl.Field().String()
+		_, err := time.Parse(layout1, value)
+		return err == nil
+	})
+	if errDate != nil {
+		return
+	}
+
+	errPort := MVSResponseValidate.RegisterValidation("portCodeValidation", func(fl validator.FieldLevel) bool {
+		regex := regexp.MustCompile(`^[A-Z]{2}[A-Z0-9]{3}$`)
+		value := fl.Field().String()
+		return regex.MatchString(value)
+	})
+	if errPort != nil {
+		return
+	}
 
 	errIMO := MVSResponseValidate.RegisterValidation("imoValidation", func(fl validator.FieldLevel) bool {
 		regex := regexp.MustCompile(`^[0-9]{7}$`)
@@ -45,24 +65,24 @@ type Services struct {
 }
 
 type PortCalls struct {
-	Seq                int         `json:"seq" validate:"required"`
+	Seq                int         `json:"seq" validate:"required,numeric,gte=1"`
 	Key                interface{} `json:"key" validate:"required"`
 	Bound              interface{} `json:"bound" validate:"required"`
 	Voyage             interface{} `json:"voyage" validate:"required"`
-	Service            Services    `json:"service" validate:"omitempty"`
-	PortEvent          string      `json:"portEvent" validate:"required"`
-	Port               Port        `json:"port" validate:"required"`
-	EstimatedEventDate string      `json:"estimatedEventDate,omitempty"`
-	ActualEventDate    string      `json:"actualEventDate,omitempty"`
+	Service            *Services   `json:"service" validate:"omitempty"`
+	PortEvent          string      `json:"portEvent" validate:"required,oneof=Loading Unloading"`
+	Port               *Port       `json:"port" validate:"omitempty"`
+	EstimatedEventDate string      `json:"estimatedEventDate,omitempty" validate:"omitempty,isValidDate"`
+	ActualEventDate    string      `json:"actualEventDate,omitempty" validate:"omitempty,isValidDate"`
 }
 
 type MasterVesselSchedule struct {
-	Scac       string        `json:"scac" validate:"required"`
-	Voyage     string        `json:"voyage" validate:"required"`
-	NextVoyage string        `json:"nextVoyage,omitempty"`
-	Vessel     VesselDetails `json:"vessel" validate:"required"`
-	Services   Services      `json:"services" validate:"required"`
-	Calls      []PortCalls   `json:"calls" `
+	Scac       string         `json:"scac" validate:"required"`
+	Voyage     string         `json:"voyage" validate:"required"`
+	NextVoyage string         `json:"nextVoyage,omitempty"`
+	Vessel     *VesselDetails `json:"vessel" validate:"omitempty"`
+	Services   *Services      `json:"services" validate:"omitempty"`
+	Calls      []PortCalls    `json:"calls" validate:"required,dive"`
 }
 
 type ScheduleRow struct {
