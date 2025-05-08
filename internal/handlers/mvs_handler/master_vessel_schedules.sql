@@ -11,9 +11,8 @@ WITH CapStartTimeFromFirstVV AS ( -- Each CTE operation depenedent on one anothe
       AND SUBSTR(VV.DATA_SOURCE, 1, 3) NOT IN ('P44', 'OCE') -- Exclude non-direct carrier vessel voyages
       AND SC.CODE = :scac
       AND V.LLOYDS_CODE = :imo
-      AND (:startDate IS NULL OR VVPT.TIME BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD')
-      AND TO_DATE(:startDate, 'YYYY-MM-DD') + :dateRange)
-    ORDER BY VV.UPDATE_TIME DESC, VV.START_TIME ASC
+      AND (:startDate IS NULL OR VVPT.TIME BETWEEN TO_DATE(:startDate, 'YYYY-MM-DD') AND TO_DATE(:startDate, 'YYYY-MM-DD') + :dateRange)
+    ORDER BY VV.UPDATE_TIME DESC, VV.START_TIME DESC
         FETCH FIRST 1 ROWS ONLY
 ),
      FirstVoyage AS (
@@ -35,7 +34,8 @@ WITH CapStartTimeFromFirstVV AS ( -- Each CTE operation depenedent on one anothe
          WHERE SC.CODE = :scac
            AND V.LLOYDS_CODE = :imo
            AND VV.CARRIER_SERVICE_CODE = FV.MAIN_SERVICE_CODE
-           AND VV.START_TIME BETWEEN CAST(FV.MAIN_END_TIME AS DATE) - FV.MAIN_TT AND CAST(FV.MAIN_END_TIME AS DATE) + FV.MAIN_TT
+--            AND VV.START_TIME BETWEEN CAST(FV.MAIN_END_TIME AS DATE) - FV.MAIN_TT AND CAST(FV.MAIN_END_TIME AS DATE) + FV.MAIN_TT
+           AND VV.START_TIME BETWEEN CAST(FV.MAIN_END_TIME AS DATE) - FV.MAIN_TT AND CAST(FV.MAIN_END_TIME AS DATE) + :dateRange
            AND VV.END_TIME > FV.MAIN_END_TIME
            AND VV.ID != (SELECT VV_ID FROM CapStartTimeFromFirstVV)
     AND VV.IS_ACTIVE = 1

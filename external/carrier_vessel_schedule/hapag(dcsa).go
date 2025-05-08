@@ -95,7 +95,7 @@ func sortAndRemoveDuplicates(portCalls []schema.PortCalls) []schema.PortCalls {
 }
 
 func (hvs *HapagVesselScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParamsForVesselVoyage]) interfaces.HeaderParams {
-	const defaultDateRange = 60
+	const defaultDateRange = 120
 	var calculateEndDate = func(startDate string, dateRange int) string {
 		maxDateRange := slices.Max([]int{dateRange, defaultDateRange})
 		date, _ := time.Parse("2006-01-02", startDate)

@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	goRedis "github.com/redis/go-redis/v9"
 	log "github.com/sirupsen/logrus"
+	"sync"
 	"time"
 )
 
@@ -29,6 +30,7 @@ type RedisConnection struct {
 	client *goRedis.Client
 	ctx    context.Context
 	ch     chan RedisCache
+	mu     sync.Mutex
 }
 
 const (
@@ -74,23 +76,41 @@ func GenerateUUIDFromString(namespace, key string) string {
 }
 
 func (r *RedisConnection) AddToChannel(namespace, key string, value []byte, expiry time.Duration) {
-	r.ch <- RedisCache{cacheType: namespace, cacheKey: GenerateUUIDFromString(namespace, key),
-		cacheValue: value, expiry: expiry}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	select {
+	case r.ch <- RedisCache{cacheType: namespace, cacheKey: GenerateUUIDFromString(namespace, key), cacheValue: value, expiry: expiry}:
+	default:
+		log.Warnf("Redis cache channel full, dropping cache entry for key: %s", key)
+	}
 }
 
 func (r *RedisConnection) Set(watchKey string) error {
-	close(r.ch)
+	r.mu.Lock()
+	// Drain the channel without closing it
+	var cacheEntries []RedisCache
+	for {
+		select {
+		case data := <-r.ch:
+			cacheEntries = append(cacheEntries, data)
+		default:
+			// No more data to read
+			goto done
+		}
+	}
+done:
+	r.mu.Unlock()
+
 	txp := func(tx *goRedis.Tx) error {
 		_, err := tx.TxPipelined(r.ctx, func(pipe goRedis.Pipeliner) error {
-			for data := range r.ch {
+			for _, data := range cacheEntries {
 				setRes := pipe.SetNX(r.ctx, data.cacheKey, data.cacheValue, data.expiry)
 				if err := setRes.Err(); err != nil {
 					log.Errorf("Error caching %s: %v", data.cacheKey, err)
 				} else {
-					log.Infof("Background Task:Successfully cached %s for %v", data.cacheKey, data.cacheType)
+					log.Infof("Background Task: Successfully cached %s for %v", data.cacheKey, data.cacheType)
 				}
 			}
-
 			return nil
 		})
 		if err != nil {
@@ -103,15 +123,11 @@ func (r *RedisConnection) Set(watchKey string) error {
 	for i := 0; i < maxRetries; i++ {
 		err := r.client.Watch(r.ctx, txp, GenerateUUIDFromString("watchKey", watchKey))
 		if err == nil {
-			// Success
-			//Reinitialize channel so we can keep adding items later using the same repository
-			r.ch = make(chan RedisCache, 50)
 			return nil
 		}
 		if err == goRedis.TxFailedErr {
 			continue
 		}
-		// Return any other error
 		return err
 	}
 	return errors.New("increment reached maximum number of retries")

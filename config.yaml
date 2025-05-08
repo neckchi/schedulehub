@@ -19,10 +19,10 @@ service.registry.p2p:
     MAEI: true
 service.registry.mvs:
   externalAPICarriers:
-    CMDU: true
+    CMDU: false
     ANNU: true
     CHNL: true
     APLU: true
     MAEU: true
     MAEI: true
-    HLCU: true
+    HLCU: false

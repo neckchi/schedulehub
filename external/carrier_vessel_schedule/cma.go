@@ -114,7 +114,12 @@ var cmaDirectionMapping = map[string]string{
 }
 
 func (cvs *CMAVesselScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParamsForVesselVoyage]) interfaces.HeaderParams {
-	const defaultDateRange = 60
+	const defaultDateRange = 90
+	var calculateStartDate = func(startDate string, dateRange int) string {
+		date, _ := time.Parse("2006-01-02", startDate)
+		endDate := date.AddDate(0, 0, -dateRange)
+		return endDate.Format("2006-01-02")
+	}
 	var calculateEndDate = func(startDate string, dateRange int) string {
 		maxDateRange := slices.Max([]int{dateRange, defaultDateRange})
 		date, _ := time.Parse("2006-01-02", startDate)
@@ -135,7 +140,7 @@ func (cvs *CMAVesselScheduleResponse) ScheduleHeaderParams(p *interfaces.Schedul
 	}
 
 	if p.Query.StartDate != "" {
-		scheduleParams["from"] = p.Query.StartDate
+		scheduleParams["from"] = calculateStartDate(p.Query.StartDate, p.Query.DateRange)
 		scheduleParams["to"] = calculateEndDate(p.Query.StartDate, p.Query.DateRange)
 	}
 
@@ -186,9 +191,9 @@ func (cvs *CMAVesselScheduleResponse) GenerateVesselCalls(vesselCalls CMAVesselS
 				Service:   &schema.Services{ServiceCode: portCalls.Service.Code, ServiceName: portCalls.Service.Name},
 				Port: &schema.Port{
 					PortCode:     cmp.Or(portCalls.Location.InternalCode, portCalls.Location.LocationCodifications[0].Codification),
-					PortName:     portCalls.Location.Name,
-					TerminalName: portCalls.Location.Facility.Name,
-					TerminalCode: cmp.Or(portCalls.Location.Facility.FacilityCodifications[0].Codification, portCalls.Location.Facility.InternalCode),
+					PortName:     cmp.Or(portCalls.Location.Name, portCalls.Point.Name),
+					TerminalName: portCalls.Terminal.Name,
+					TerminalCode: portCalls.Terminal.Code,
 				},
 				EstimatedEventDate: getEventDateTime(activity),
 			}

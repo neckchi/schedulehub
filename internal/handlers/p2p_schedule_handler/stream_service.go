@@ -19,7 +19,6 @@ import (
 // ScheduleService encapsulates the dependencies and methods for handling schedules
 type ScheduleStreamingService struct {
 	ctx         context.Context
-	done        <-chan int
 	client      *httpclient.HttpClient
 	env         *env.Manager
 	p2p         *carrier_p2p_schedule.P2PScheduleServiceFactory
@@ -29,7 +28,6 @@ type ScheduleStreamingService struct {
 // NewScheduleService creates a new instance of ScheduleService
 func NewScheduleStreamingService(
 	ctx context.Context,
-	done <-chan int,
 	client *httpclient.HttpClient,
 	env *env.Manager,
 	p2p *carrier_p2p_schedule.P2PScheduleServiceFactory,
@@ -37,7 +35,6 @@ func NewScheduleStreamingService(
 ) *ScheduleStreamingService {
 	return &ScheduleStreamingService{
 		ctx:         ctx,
-		done:        done,
 		client:      client,
 		env:         env,
 		p2p:         p2p,
@@ -67,8 +64,6 @@ func (sss *ScheduleStreamingService) ConsolidateSchedule(scac schema.CarrierCode
 	go func() {
 		defer close(stream)
 		select {
-		case <-sss.done:
-			return
 		case <-sss.ctx.Done():
 			return
 		case stream <- sss.FetchCarrierSchedule(scac):
@@ -110,8 +105,6 @@ func (sss *ScheduleStreamingService) FilterSchedule(stream <-chan []*schema.P2PS
 		defer close(out)
 		for schedules := range stream {
 			select {
-			case <-sss.done:
-				return
 			case <-sss.ctx.Done():
 				return
 			case out <- slices.Collect(sss.PostFilter(schedules, filter)):
@@ -129,8 +122,6 @@ func (sss *ScheduleStreamingService) ValidateSchedules(stream <-chan []*schema.P
 		for schedule := range stream {
 			if sss.validSchedulesFn(schedule) {
 				select {
-				case <-sss.done:
-					return
 				case <-sss.ctx.Done():
 					return
 				case out <- schedule:
@@ -165,8 +156,6 @@ func (sss *ScheduleStreamingService) FanIn(channels ...<-chan []*schema.P2PSched
 		defer wg.Done()
 		for i := range ch {
 			select {
-			case <-sss.done:
-				return
 			case <-sss.ctx.Done():
 				return
 			case fannedInStream <- i:
@@ -202,8 +191,6 @@ func (sss *ScheduleStreamingService) StreamResponse(w utils.FlushWriter, fannedI
 		defer close(doneProcessing)
 		for schedules := range fannedIn {
 			select {
-			case <-sss.done:
-				return
 			case <-sss.ctx.Done():
 				return
 			default:

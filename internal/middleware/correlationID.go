@@ -12,12 +12,9 @@ const correlationIDKey correlateContextKey = "X-Correlation-ID"
 
 func AddCorrelationID(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		var correlationID string
-		cidFromRequest := r.Header.Get(string(correlationIDKey))
-		if cidFromRequest == "" {
-			correlationID = uuid.New().String()
-		} else {
-			correlationID = cidFromRequest
+		correlationID := r.Header.Get(string(correlationIDKey))
+		if correlationID == "" {
+			correlationID = uuid.NewString()
 		}
 		ctx := context.WithValue(r.Context(), correlationIDKey, correlationID)
 		r = r.WithContext(ctx)

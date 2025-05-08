@@ -52,12 +52,10 @@ func NewP2PScheduleService(
 func P2PScheduleHandler(s *P2PScheduleService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fw := utils.NewFlushWriter(w)
+		queryParams, _ := r.Context().Value(middleware.P2PQueryParamsKey).(schema.QueryParams)
 		ctx, cancel := context.WithCancel(r.Context())
 		defer cancel() // Ensure cancellation when function exits
-		queryParams, _ := r.Context().Value(middleware.P2PQueryParamsKey).(schema.QueryParams)
-		done := make(chan int) // this is going to ensure that our goroutine are shut down in the event that we call done from the P2PScheduleHandler function
-		defer close(done)
-		service := NewScheduleStreamingService(ctx, done, s.client, s.env, s.ps, &queryParams)
+		service := NewScheduleStreamingService(ctx, s.client, s.env, s.ps, &queryParams)
 		fanOutscheduleChannels := service.FanOutScheduleChannels()
 		fannedInStream := service.FanIn(fanOutscheduleChannels...)
 		service.StreamResponse(fw, fannedInStream)

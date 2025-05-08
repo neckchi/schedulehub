@@ -26,12 +26,12 @@ func main() {
 
 	scheduleRouter := routers.ScheduleRouter()
 	scheduleServer := &http.Server{
-		Addr:    ":8006",
+		Addr:    ":8008",
 		Handler: scheduleRouter,
 	}
 	voyageRouter := routers.VoyageRouter()
 	voyageServer := &http.Server{
-		Addr:    ":8005",
+		Addr:    ":8007",
 		Handler: voyageRouter,
 	}
 	go func() {
@@ -49,14 +49,14 @@ func main() {
 	}()
 	go func() {
 		scheduleServer.SetKeepAlivesEnabled(true)
-		log.Info("Starting HTTP Server on port 8006  for p2p schedule")
+		log.Info("Starting HTTP Server on port 8008  for p2p schedule")
 		if err := scheduleServer.ListenAndServe(); err != http.ErrServerClosed {
 			log.Error("Server Error: ", err)
 		}
 	}()
 	go func() {
 		voyageServer.SetKeepAlivesEnabled(true)
-		log.Info("Starting HTTP Server on port 8005 for master vessel voyage")
+		log.Info("Starting HTTP Server on port 8007 for master vessel voyage")
 		if err := voyageServer.ListenAndServe(); err != http.ErrServerClosed {
 			log.Error("Server Error: ", err)
 		}

@@ -6,7 +6,7 @@ import (
 	"github.com/neckchi/schedulehub/external/carrier_vessel_schedule"
 	"github.com/neckchi/schedulehub/internal/database"
 	"github.com/neckchi/schedulehub/internal/exceptions"
-	"github.com/neckchi/schedulehub/internal/http"
+	httpclient "github.com/neckchi/schedulehub/internal/http"
 	"github.com/neckchi/schedulehub/internal/middleware"
 	"github.com/neckchi/schedulehub/internal/schema"
 	env "github.com/neckchi/schedulehub/internal/secret"
@@ -45,10 +45,8 @@ func VoyageHandler(s *VoyageService) http.Handler {
 			return
 		}
 		ctx, cancel := context.WithCancel(r.Context())
-		defer cancel()         // Ensure cancellation when function exits
-		done := make(chan int) // this is going to ensure that our goroutine are shut down in the event that we call done from the P2PScheduleHandler function
-		defer close(done)
-		mvsService := NewMastervVesselVoyageService(ctx, s.oracle, done, s.client, s.env, s.vs, &queryParams, scacConfig)
+		defer cancel() // Ensure cancellation when function exits
+		mvsService := NewMastervVesselVoyageService(ctx, s.oracle, s.client, s.env, s.vs, &queryParams, scacConfig)
 		fanoutMVSChannels := mvsService.FanOutMVSChannels()
 		fannedInStream := mvsService.FanInMasterVesselSchedule(fanoutMVSChannels...)
 		mvsService.StreamMasterVesselSchedule(fw, fannedInStream)

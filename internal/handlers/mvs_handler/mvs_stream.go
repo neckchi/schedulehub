@@ -19,7 +19,6 @@ import (
 type MasterVesselSchedule struct {
 	ctx            context.Context
 	db             database.OracleRepository
-	done           <-chan int
 	client         *httpclient.HttpClient
 	env            *env.Manager
 	vv             *carrier_vessel_schedule.VesselScheduleServiceFactory
@@ -31,7 +30,6 @@ type MasterVesselSchedule struct {
 func NewMastervVesselVoyageService(
 	ctx context.Context,
 	db database.OracleRepository,
-	done <-chan int,
 	client *httpclient.HttpClient,
 	env *env.Manager,
 	vv *carrier_vessel_schedule.VesselScheduleServiceFactory,
@@ -40,7 +38,6 @@ func NewMastervVesselVoyageService(
 	return &MasterVesselSchedule{
 		ctx:            ctx,
 		db:             db,
-		done:           done,
 		client:         client,
 		env:            env,
 		vv:             vv,
@@ -66,8 +63,6 @@ func (mvs *MasterVesselSchedule) ConsolidateMasterVesselSchedule(scac schema.Car
 		select {
 		case <-mvs.ctx.Done():
 			return
-		case <-mvs.done:
-			return
 		case stream <- mvs.FetchMasterVesselSchedule(scac):
 		}
 	}()
@@ -86,7 +81,7 @@ func (mvs *MasterVesselSchedule) FetchMasterVesselSchedule(scac schema.CarrierCo
 		return masterVesselSchedule
 	}
 	//Query database
-	ctx, cancel := context.WithTimeout(mvs.ctx, 7*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 	defer cancel()
 	sqlResults, err := mvs.db.QueryContext(ctx, scac, *mvs.queryParams)
 	if err != nil {
@@ -111,8 +106,6 @@ func (mvs *MasterVesselSchedule) ValidateMasterVesselSchedules(stream <-chan *sc
 			if schedule != nil && mvs.validMasterVesselSchedulesFn(schedule) {
 				select {
 				case <-mvs.ctx.Done():
-					return
-				case <-mvs.done:
 					return
 				case out <- schedule:
 				}
@@ -144,8 +137,6 @@ func (mvs *MasterVesselSchedule) FanInMasterVesselSchedule(channels ...<-chan *s
 		for i := range ch {
 			select {
 			case <-mvs.ctx.Done():
-				return
-			case <-mvs.done:
 				return
 			case fannedInStream <- i:
 			}
@@ -180,8 +171,6 @@ func (mvs *MasterVesselSchedule) StreamMasterVesselSchedule(w utils.FlushWriter,
 		for schedules := range fannedIn {
 			select {
 			case <-mvs.ctx.Done():
-				return
-			case <-mvs.done:
 				return
 			default:
 				if !first {

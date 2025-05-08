@@ -85,6 +85,11 @@ type MasterVesselSchedule struct {
 	Calls      []PortCalls    `json:"calls" validate:"required,dive"`
 }
 
+type MasterVesselScheduleList struct {
+	VesselIMO string                 `json:"vesselIMO"`
+	Schedules []MasterVesselSchedule `json:"vesselSchedules"`
+}
+
 type ScheduleRow struct {
 	DataSource      string
 	SCAC            string
