@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
+	"slices"
 	"time"
 )
 
@@ -82,19 +83,21 @@ var maeuEventType = map[string]string{
 }
 
 func (mvs *MaerskVesselSchedule) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParamsForVesselVoyage]) interfaces.HeaderParams {
+	const defaultDateRange = 20
 	var calculateStartDate = func(startDate string, dateRange int) string {
+		maxDateRange := slices.Max([]int{dateRange, defaultDateRange})
 		date, _ := time.Parse("2006-01-02", startDate)
-		endDate := date.AddDate(0, 0, -dateRange)
+		endDate := date.AddDate(0, 0, -maxDateRange)
 		return endDate.Format("2006-01-02")
 	}
 	scheduleHeaders := map[string]string{
-		"Consumer-Key": *p.Env.MaerskToken,
+		"Consumer-Key": *p.Env.MaerskToken3,
 	}
 	scheduleParams := map[string]string{
 		"vesselIMONumber": p.Query.VesselIMO,
 		"carrierCodes":    string(p.Scac),
 		"startDate":       calculateStartDate(p.Query.StartDate, p.Query.DateRange),
-		"dateRange":       fmt.Sprintf("P%sW", "12"),
+		"dateRange":       fmt.Sprintf("P%sW", "16"),
 	}
 	scac = p.Scac
 	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}

@@ -31,6 +31,7 @@ type CarrierEnvConfig struct {
 	MaerskLocURL  *string
 	MaerskToken   *string
 	MaerskToken2  *string
+	MaerskToken3  *string
 	MscOauth      *string
 	MscAudience   *string
 	MscClient     *string
@@ -91,6 +92,7 @@ func (m *Manager) LoadConfig() error {
 	MaerskLocURL := m.MustGet("MAEU_LOCATION")
 	MaerskToken := m.MustGet("MAEU_TOKEN")
 	MaerskToken2 := m.MustGet("MAEU_TOKEN2")
+	MaerskToken3 := m.MustGet("MAEU_TOKEN3")
 	IqaxURL := m.MustGet("IQAX_URL")
 	IqaxToken := m.MustGet("IQAX_TOKEN")
 	OneURL := m.MustGet("ONEY_URL")
@@ -135,6 +137,7 @@ func (m *Manager) LoadConfig() error {
 		MaerskLocURL:  &MaerskLocURL,
 		MaerskToken:   &MaerskToken,
 		MaerskToken2:  &MaerskToken2,
+		MaerskToken3:  &MaerskToken3,
 		IqaxURL:       &IqaxURL,
 		IqaxToken:     &IqaxToken,
 		CmaURL:        &CmaURL,
