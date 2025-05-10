@@ -43,9 +43,12 @@ type CarrierEnvConfig struct {
 	HapagClient   *string
 	HapagSecret   *string
 	OneURL        *string
+	OneDCSAURL    *string
 	OneTURL       *string
 	OneToken      *string
 	OneAuth       *string
+	OneDCSAAuth   *string
+	OneClientID   *string
 	CmaURL        *string
 	CmaVVURL      *string
 	CmaToken      *string
@@ -96,9 +99,12 @@ func (m *Manager) LoadConfig() error {
 	IqaxURL := m.MustGet("IQAX_URL")
 	IqaxToken := m.MustGet("IQAX_TOKEN")
 	OneURL := m.MustGet("ONEY_URL")
+	OneDCSAURL := m.MustGet("ONEY_DCSA_URL")
 	OneTURL := m.MustGet("ONEY_TURL")
 	OneToken := m.MustGet("ONEY_TOKEN")
 	OneAuth := m.MustGet("ONEY_AUTH")
+	OneDCSAAuth := m.MustGet("ONEY_DCSA_AUTH")
+	OneClientID := m.MustGet("ONEY_CLIENT_ID")
 	HapagURL := m.MustGet("HLCU_URL")
 	HapagVVURL := m.MustGet("HLCU_VV_URL")
 	HapagClient := m.MustGet("HLCU_CLIENT_ID")
@@ -144,9 +150,12 @@ func (m *Manager) LoadConfig() error {
 		CmaVVURL:      &CmaVVURL,
 		CmaToken:      &CmaToken,
 		OneURL:        &OneURL,
+		OneDCSAURL:    &OneDCSAURL,
 		OneTURL:       &OneTURL,
 		OneToken:      &OneToken,
 		OneAuth:       &OneAuth,
+		OneDCSAAuth:   &OneDCSAAuth,
+		OneClientID:   &OneClientID,
 		HapagURL:      &HapagURL,
 		HapagVVURL:    &HapagVVURL,
 		HapagClient:   &HapagClient,

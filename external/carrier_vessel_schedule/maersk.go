@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
-	"slices"
-	"time"
 )
 
 type MaerskVesselSchedule struct {
@@ -83,20 +82,15 @@ var maeuEventType = map[string]string{
 }
 
 func (mvs *MaerskVesselSchedule) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParamsForVesselVoyage]) interfaces.HeaderParams {
-	const defaultDateRange = 20
-	var calculateStartDate = func(startDate string, dateRange int) string {
-		maxDateRange := slices.Max([]int{dateRange, defaultDateRange})
-		date, _ := time.Parse("2006-01-02", startDate)
-		endDate := date.AddDate(0, 0, -maxDateRange)
-		return endDate.Format("2006-01-02")
-	}
 	scheduleHeaders := map[string]string{
 		"Consumer-Key": *p.Env.MaerskToken3,
 	}
+
+	startDate, _ := external.CalculateDateRangeForMVS(p.Query.StartDate, p.Query.DateRange)
 	scheduleParams := map[string]string{
 		"vesselIMONumber": p.Query.VesselIMO,
 		"carrierCodes":    string(p.Scac),
-		"startDate":       calculateStartDate(p.Query.StartDate, p.Query.DateRange),
+		"startDate":       startDate,
 		"dateRange":       fmt.Sprintf("P%sW", "16"),
 	}
 	scac = p.Scac
@@ -111,7 +105,7 @@ func (mvs *MaerskVesselSchedule) GenerateSchedule(responseJson []byte) (*schema.
 		return nil, err
 	}
 	if maerskVesselSchedule.Vessel == nil || len(maerskVesselSchedule.VesselCalls) == 0 {
-		return nil, errors.New("MaerskVesselScheduleResponse is empty")
+		return nil, errors.New("maersk vessel schedule response is empty")
 	}
 	imo = maerskVesselSchedule.Vessel.VesselIMONumber
 	mvsResult := &schema.MasterVesselSchedule{
@@ -129,13 +123,6 @@ func (mvs *MaerskVesselSchedule) GenerateVesselCalls(vesselCalls []MaerskVesselC
 	var maerskPortCalls = make([]schema.PortCalls, 0, len(vesselCalls))
 	for _, portCalls := range vesselCalls {
 		var getVoyageNumberAndDirection = func(call MaerskCallSchedule) (string, string, string) {
-			voyageDirection := map[string]string{
-				"W": "WBO",
-				"E": "EBO",
-				"N": "NBO",
-				"S": "SBO",
-			}
-
 			if call.TransportEventTypeCode == "ARRI" {
 				inboundService := portCalls.Transport.InboundService
 				return inboundService.CarrierVoyageNumber,

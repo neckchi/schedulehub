@@ -250,7 +250,7 @@ func (csp *CmaScheduleResponse) GenerateTransport(transportDetails *Transportati
 
 	var referenceType, reference string
 	switch {
-	case len(vesselIMO) > 0 && len(vesselIMO) < 9:
+	case external.ValidateIMO(vesselIMO):
 		referenceType = "IMO"
 		reference = vesselIMO
 	case vehicleType == "Barge":

@@ -8,7 +8,6 @@ import (
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	"slices"
-	"time"
 )
 
 type CMAVesselScheduleResponse []CMAVesselSchedules
@@ -114,19 +113,6 @@ var cmaDirectionMapping = map[string]string{
 }
 
 func (cvs *CMAVesselScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParamsForVesselVoyage]) interfaces.HeaderParams {
-	const defaultDateRange = 90
-	var calculateStartDate = func(startDate string, dateRange int) string {
-		date, _ := time.Parse("2006-01-02", startDate)
-		endDate := date.AddDate(0, 0, -dateRange)
-		return endDate.Format("2006-01-02")
-	}
-	var calculateEndDate = func(startDate string, dateRange int) string {
-		maxDateRange := slices.Max([]int{dateRange, defaultDateRange})
-		date, _ := time.Parse("2006-01-02", startDate)
-		endDate := date.AddDate(0, 0, maxDateRange)
-		return endDate.Format("2006-01-02")
-	}
-
 	scheduleHeaders := map[string]string{
 		"KeyId": *p.Env.CmaToken,
 	}
@@ -135,13 +121,15 @@ func (cvs *CMAVesselScheduleResponse) ScheduleHeaderParams(p *interfaces.Schedul
 		"vesselIMO": p.Query.VesselIMO,
 	}
 
+	startDate, endDate := external.CalculateDateRangeForMVS(p.Query.StartDate, p.Query.DateRange)
+
 	if p.Query.Voyage != "" {
 		scheduleParams["voyageCode"] = p.Query.Voyage
 	}
 
 	if p.Query.StartDate != "" {
-		scheduleParams["from"] = calculateStartDate(p.Query.StartDate, p.Query.DateRange)
-		scheduleParams["to"] = calculateEndDate(p.Query.StartDate, p.Query.DateRange)
+		scheduleParams["from"] = startDate
+		scheduleParams["to"] = endDate
 	}
 
 	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}

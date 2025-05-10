@@ -1,6 +1,10 @@
 package external
 
 import (
+	"fmt"
+	"github.com/neckchi/schedulehub/internal/schema"
+	"regexp"
+	"slices"
 	"time"
 )
 
@@ -26,6 +30,35 @@ func GetTransportType(key string) (string, bool) {
 		return value, true
 	}
 	return "Vessel", false // Default value if key is not found
+}
+
+func ValidateIMO(imo string) bool {
+	regex := regexp.MustCompile(`^[0-9]{7}$`)
+	return regex.MatchString(imo)
+}
+
+func CalculateDateRange(q *schema.QueryParams, timeFormat string) (startTime, endTime string, err error) {
+	date, err := time.Parse("2006-01-02", q.StartDate)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to parse date: %w", err)
+	}
+	startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
+	endDate := startDate.AddDate(0, 0, q.SearchRange*7)
+	startTime = startDate.Format(timeFormat)
+	endTime = endDate.Format(timeFormat)
+	return startTime, endTime, nil
+}
+
+const defaultStartDayNum = 20
+const defaultEndDayNum = 120
+
+func CalculateDateRangeForMVS(startDate string, dateRange int) (string, string) {
+	date, _ := time.Parse("2006-01-02", startDate)
+	maxStartDateRange := slices.Max([]int{dateRange, defaultStartDayNum})
+	maxEndDateRange := slices.Max([]int{dateRange, defaultEndDayNum})
+	startDateAdjusted := date.AddDate(0, 0, -maxStartDateRange)
+	endDateAdjusted := date.AddDate(0, 0, maxEndDateRange)
+	return startDateAdjusted.Format("2006-01-02"), endDateAdjusted.Format("2006-01-02")
 }
 
 func ConvertDateFormat(originalDate *string, originalLayout string) string {

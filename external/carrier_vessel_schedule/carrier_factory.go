@@ -91,9 +91,21 @@ func NewVesselScheduleServiceFactory(e *env.Manager) *VesselScheduleServiceFacto
 				BaseURL:       *e.HapagVVURL,
 				Method:        http.MethodGet,
 				CacheDuration: 6 * time.Hour,
-				CacheKey:      "hapag schedule",
+				CacheKey:      "hapag vessel schedule",
 				RequiresAuth:  false,
 				BaseSchema:    &HapagVesselScheduleResponse{},
+			},
+			schema.ONEY: {
+				Name:           "ONE",
+				BaseURL:        *e.OneURL + "/" + "transportID",
+				AuthURL:        *e.OneTURL,
+				Method:         http.MethodGet,
+				CacheDuration:  6 * time.Hour,
+				CacheKey:       "one vessel schedule",
+				RequiresAuth:   true,
+				AuthExpiration: 55 * time.Minute,
+				AuthSchema:     &OneVesselSchedule{},
+				BaseSchema:     &OneVesselSchedule{},
 			},
 
 			// Add more carriers  here

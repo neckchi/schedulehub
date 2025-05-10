@@ -8,7 +8,6 @@ import (
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	"slices"
-	"time"
 )
 
 type HapagVesselScheduleResponse []HapagCarrierService
@@ -51,13 +50,12 @@ type HapagTimestamp struct {
 	ChangeRemark        string `json:"changeRemark"`
 }
 
-//var hapagEventType = map[string]string{
-//	"ARRI": "Unloading",
-//	"DEPA": "Loading",
-//	"PLN":  "Planned",
-//}
+type KeyValueForPortEvent struct {
+	eventType         string
+	eventVoyageNumber string
+}
 
-var hapagVoyageDirection = map[string]string{
+var voyageDirection = map[string]string{
 	"W": "WBO",
 	"E": "EBO",
 	"N": "NBO",
@@ -95,25 +93,19 @@ func sortAndRemoveDuplicates(portCalls []schema.PortCalls) []schema.PortCalls {
 }
 
 func (hvs *HapagVesselScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArgs[*schema.QueryParamsForVesselVoyage]) interfaces.HeaderParams {
-	const defaultDateRange = 120
-	var calculateEndDate = func(startDate string, dateRange int) string {
-		maxDateRange := slices.Max([]int{dateRange, defaultDateRange})
-		date, _ := time.Parse("2006-01-02", startDate)
-		endDate := date.AddDate(0, 0, maxDateRange)
-		return endDate.Format("2006-01-02")
-	}
-
 	scheduleHeaders := map[string]string{
 		"X-IBM-Client-Id":     *p.Env.HapagClient,
 		"X-IBM-Client-Secret": *p.Env.HapagSecret,
 		"Accept":              "application/json",
 	}
 
+	_, endDate := external.CalculateDateRangeForMVS(p.Query.StartDate, p.Query.DateRange) //hapag would also return the previous voyage so we dont need the start date here
+
 	scheduleParams := map[string]string{
 		"vesselIMONumber":     p.Query.VesselIMO,
 		"carrierVoyageNumber": p.Query.Voyage,
 		"startDate":           p.Query.StartDate,
-		"endDate":             calculateEndDate(p.Query.StartDate, p.Query.DateRange),
+		"endDate":             endDate,
 	}
 	headerParams := interfaces.HeaderParams{Headers: scheduleHeaders, Params: scheduleParams}
 	return headerParams
@@ -146,10 +138,7 @@ func (hvs *HapagVesselScheduleResponse) GenerateSchedule(responseJson []byte) (*
 
 func (hvs *HapagVesselScheduleResponse) GenerateVesselCalls(vesselSchedules HapagVesselScheduleResponse) []schema.PortCalls {
 	var hapagPortCalls = make([]schema.PortCalls, 0, len(vesselSchedules))
-	type KeyValueForPortEvent struct {
-		eventType         string
-		eventVoyageNumber string
-	}
+
 	for _, vesselSchedule := range vesselSchedules {
 		for _, schedule := range vesselSchedule.VesselSchedules {
 			for _, portCalls := range schedule.TransportCalls {
@@ -189,7 +178,7 @@ func (hvs *HapagVesselScheduleResponse) GenerateVesselCalls(vesselSchedules Hapa
 						portCallsResult := schema.PortCalls{
 							Seq:       i,
 							Key:       portCalls.TransportCallReference,
-							Bound:     cmp.Or(hapagVoyageDirection[pe.eventVoyageNumber[len(pe.eventVoyageNumber)-1:]], "UNK"),
+							Bound:     cmp.Or(voyageDirection[pe.eventVoyageNumber[len(pe.eventVoyageNumber)-1:]], "UNK"),
 							Voyage:    pe.eventVoyageNumber,
 							PortEvent: pe.eventType,
 							Service:   &schema.Services{ServiceCode: vesselSchedule.CarrierServiceCode, ServiceName: vesselSchedule.CarrierServiceName},

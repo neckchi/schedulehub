@@ -3,13 +3,11 @@ package carrier_p2p_schedule
 import (
 	"cmp"
 	"encoding/json"
-	"fmt"
 	"github.com/neckchi/schedulehub/external"
 	"github.com/neckchi/schedulehub/external/interfaces"
 	"github.com/neckchi/schedulehub/internal/schema"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"time"
 )
 
 // Response represents the array of shipping schedules
@@ -67,7 +65,7 @@ type address struct {
 	Country  string `json:"country"`
 }
 
-const hapagDateFormat string = "2006-01-02T15:04:05-07:00"
+const dcsaDateFormat string = "2006-01-02T15:04:05-07:00"
 
 func (hsp *HapagScheduleResponse) GenerateSchedule(responseJson []byte) ([]*schema.P2PSchedule, error) {
 	var hapagScheduleData HapagScheduleResponse
@@ -77,8 +75,8 @@ func (hsp *HapagScheduleResponse) GenerateSchedule(responseJson []byte) ([]*sche
 	}
 	var hapagScheduleList = make([]*schema.P2PSchedule, 0, len(hapagScheduleData))
 	for _, route := range hapagScheduleData {
-		etd := external.ConvertDateFormat(&route.PlaceOfReceipt.DateTime, hapagDateFormat)
-		eta := external.ConvertDateFormat(&route.PlaceOfDelivery.DateTime, hapagDateFormat)
+		etd := external.ConvertDateFormat(&route.PlaceOfReceipt.DateTime, dcsaDateFormat)
+		eta := external.ConvertDateFormat(&route.PlaceOfDelivery.DateTime, dcsaDateFormat)
 		scheduleResult := &schema.P2PSchedule{
 			Scac:          "HLCU",
 			PointFrom:     route.PlaceOfReceipt.Location.UNLocationCode,
@@ -139,18 +137,18 @@ func (hsp *HapagScheduleResponse) GenerateLegPoints(legDetails *hleg) *schema.Le
 }
 
 func (hsp *HapagScheduleResponse) GenerateEventDate(seq int, cutOffs []*cutOffTime, legDetails *hleg) *schema.Leg {
-	etd := external.ConvertDateFormat(&legDetails.Departure.DateTime, hapagDateFormat)
-	eta := external.ConvertDateFormat(&legDetails.Arrival.DateTime, hapagDateFormat)
+	etd := external.ConvertDateFormat(&legDetails.Departure.DateTime, dcsaDateFormat)
+	eta := external.ConvertDateFormat(&legDetails.Arrival.DateTime, dcsaDateFormat)
 	var cyCutoffDate, docCutoffDate, vgmCutoffDate string
 	if seq == 0 {
 		for _, cutOff := range cutOffs {
 			switch cutOff.CutOffDateTimeCode {
 			case "DCO":
-				docCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
+				docCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, dcsaDateFormat)
 			case "VCO":
-				vgmCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
+				vgmCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, dcsaDateFormat)
 			case "FCO":
-				cyCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, hapagDateFormat)
+				cyCutoffDate = external.ConvertDateFormat(&cutOff.CutOffDateTime, dcsaDateFormat)
 			}
 
 		}
@@ -181,7 +179,7 @@ func (hsp *HapagScheduleResponse) GenerateTransport(legDetails *hleg) *schema.Le
 
 	var referenceType, reference string
 	switch {
-	case len(vesselIMO) > 0 && len(vesselIMO) < 9 && vesselIMO != "0000000":
+	case external.ValidateIMO(vesselIMO) && vesselIMO != "0000000":
 		referenceType = "IMO"
 		reference = vesselIMO
 	}
@@ -225,25 +223,13 @@ func (hsp *HapagScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArg
 
 	const queryTimeFormat = "2006-01-02T15:04:05.000Z"
 
-	var calculateDateRange = func(q *schema.QueryParams) (startTime, endTime string, err error) {
-		date, err := time.Parse("2006-01-02", q.StartDate)
-		if err != nil {
-			return "", "", fmt.Errorf("failed to parse date: %w", err)
-		}
-		startDate := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
-		endDate := startDate.AddDate(0, 0, q.SearchRange*7)
-		startTime = startDate.Format(queryTimeFormat)
-		endTime = endDate.Format(queryTimeFormat)
-		return startTime, endTime, nil
-	}
-
 	scheduleHeaders := map[string]string{
 		"X-IBM-Client-Id":     *p.Env.HapagClient,
 		"X-IBM-Client-Secret": *p.Env.HapagSecret,
 		"Accept":              "application/json",
 	}
 
-	startDate, endDate, _ := calculateDateRange(p.Query)
+	startDate, endDate, _ := external.CalculateDateRange(p.Query, queryTimeFormat)
 
 	scheduleParams := map[string]string{
 		"placeOfReceipt":  p.Query.PointFrom,
