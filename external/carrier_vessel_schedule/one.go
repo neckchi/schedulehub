@@ -42,15 +42,6 @@ type OneVessel struct {
 	BerthingDateEstimated  string    `json:"berthingDateEstimated"`
 }
 
-type PortEvent struct {
-	eventType         string
-	eventVoyageNumber string
-	serviceCode       string
-	serviceName       string
-	estEventDate      string
-	actEventDate      string
-}
-
 const oneDateFormat = "2006-01-02 15:04:05"
 
 func (ovs *OneVesselSchedule) TokenHeaderParams(e *env.Manager) interfaces.HeaderParams {

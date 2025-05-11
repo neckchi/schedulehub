@@ -263,7 +263,7 @@ func (ocr *OneDCSAScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleA
 		"Authorization": fmt.Sprintf("Bearer %s", p.Token.Data["access_token"].(string)),
 		"Accept":        "application/json",
 	}
-	startDate, endDate, _ := external.CalculateDateRange(p.Query, queryTimeFormat)
+	startDate, endDate, _ := external.CalculateDateRangeForP2P(p.Query, queryTimeFormat)
 
 	scheduleParams := map[string]string{
 		"placeOfReceipt":  p.Query.PointFrom,

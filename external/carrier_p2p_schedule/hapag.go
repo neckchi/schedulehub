@@ -229,7 +229,7 @@ func (hsp *HapagScheduleResponse) ScheduleHeaderParams(p *interfaces.ScheduleArg
 		"Accept":              "application/json",
 	}
 
-	startDate, endDate, _ := external.CalculateDateRange(p.Query, queryTimeFormat)
+	startDate, endDate, _ := external.CalculateDateRangeForP2P(p.Query, queryTimeFormat)
 
 	scheduleParams := map[string]string{
 		"placeOfReceipt":  p.Query.PointFrom,

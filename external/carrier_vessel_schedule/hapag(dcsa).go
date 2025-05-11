@@ -50,16 +50,20 @@ type HapagTimestamp struct {
 	ChangeRemark        string `json:"changeRemark"`
 }
 
-type KeyValueForPortEvent struct {
-	eventType         string
-	eventVoyageNumber string
-}
-
 var voyageDirection = map[string]string{
 	"W": "WBO",
 	"E": "EBO",
 	"N": "NBO",
 	"S": "SBO",
+}
+
+type PortEvent struct {
+	eventType         string
+	eventVoyageNumber string
+	serviceCode       string
+	serviceName       string
+	estEventDate      string
+	actEventDate      string
 }
 
 const hapagDateFormat string = "2006-01-02T15:04:05-07:00"
@@ -169,9 +173,9 @@ func (hvs *HapagVesselScheduleResponse) GenerateVesselCalls(vesselSchedules Hapa
 					return ""
 				}
 
-				portEvents := []KeyValueForPortEvent{
-					{"Unloading", portCalls.CarrierImportVoyageNumber},
-					{"Loading", portCalls.CarrierExportVoyageNumber},
+				portEvents := []PortEvent{
+					{eventType: "Unloading", eventVoyageNumber: portCalls.CarrierImportVoyageNumber},
+					{eventType: "Loading", eventVoyageNumber: portCalls.CarrierExportVoyageNumber},
 				}
 				for i, pe := range portEvents {
 					if pe.eventVoyageNumber != "" {

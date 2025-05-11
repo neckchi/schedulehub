@@ -37,7 +37,7 @@ func ValidateIMO(imo string) bool {
 	return regex.MatchString(imo)
 }
 
-func CalculateDateRange(q *schema.QueryParams, timeFormat string) (startTime, endTime string, err error) {
+func CalculateDateRangeForP2P(q *schema.QueryParams, timeFormat string) (startTime, endTime string, err error) {
 	date, err := time.Parse("2006-01-02", q.StartDate)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to parse date: %w", err)
@@ -50,7 +50,7 @@ func CalculateDateRange(q *schema.QueryParams, timeFormat string) (startTime, en
 }
 
 const defaultStartDayNum = 20
-const defaultEndDayNum = 120
+const defaultEndDayNum = 150
 
 func CalculateDateRangeForMVS(startDate string, dateRange int) (string, string) {
 	date, _ := time.Parse("2006-01-02", startDate)
