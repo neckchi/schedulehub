@@ -49,7 +49,7 @@ func NewP2PScheduleServiceFactory(e *env.Manager) *P2PScheduleServiceFactory {
 				BaseSchema:     &ZimScheduleResponse{},
 			},
 			schema.ONEY: {
-				Name:           "ONE",
+				Name:           "ONE DCSA",
 				BaseURL:        *e.OneDCSAURL,
 				AuthURL:        *e.OneTURL,
 				Method:         http.MethodGet,
