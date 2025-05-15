@@ -102,7 +102,8 @@ ANNU, ANRM, APLU, CHNL, CMDU, COSU, HDMU, MAEI, MAEU, MSCU, ONEY, OOLU,ZIMU
 Other Carriers currently do not offer such an API.
 
 ## Master Vessel Voyage
-/schedule/vv  which return master vessel voyage for  all the IB carriers, providing the latest voyage route. 
+/schedule/mastervoyage  which return master vessel voyage for all the IB carriers, providing the latest voyage route based on the requested vessel IMO.
+Apart from this, this can also handle the external carrier api for vessel voyage.
 
 ## App Configuration
 /read/{service.registry}  read the application config which does not require web server restart if any change made. 
@@ -169,7 +170,7 @@ There are so many 'target' we can use. For the details,please check the MakeFile
   * http://127.0.0.1:8002/schedules/p2p?startDateType=Departure&searchRange=4&pointFrom=CNSHA&pointTo=DEHAM&startDate=2025-04-11
 
 * Example - Master Vessel Voyage
-  * http://127.0.0.1:8003/schedules/mastervoyage?scac=ANNU&vesselIMO=9348675&voyageNum=0Y1J1S1NL
+  * http://127.0.0.1:8007/schedules/mastervoyage?startDate=2025-05-02&scac=MAEU&dateRange=10&vesselIMO=9443487
     
 * Example - Application Config
   * http://127.0.0.1:8004/read/service.registry.schedule
